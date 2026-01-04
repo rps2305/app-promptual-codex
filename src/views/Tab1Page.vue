@@ -8,6 +8,11 @@
             Promptual Gallery
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="goToTags">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -30,34 +35,6 @@
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
       </section>
 
-      <section class="tag-section" v-if="tags.length">
-        <div class="tag-header">
-          <ion-text class="tag-label">Filter by tag</ion-text>
-          <ion-button v-if="selectedTags.length" size="small" fill="clear" @click="clearTags">
-            Clear
-          </ion-button>
-        </div>
-        <div class="tag-list">
-          <ion-chip
-            v-for="tag in tagOptions"
-            :key="tag.id"
-            :outline="!isSelected(tag.id)"
-            color="primary"
-            @click="toggleTag(tag.id)"
-          >
-            <ion-label>{{ tag.name }}</ion-label>
-          </ion-chip>
-          <ion-button
-            v-if="tags.length > tagOptions.length"
-            size="small"
-            fill="clear"
-            @click="showAllTags = true"
-          >
-            Show all
-          </ion-button>
-        </div>
-      </section>
-
       <ion-grid>
         <ion-row>
           <ion-col
@@ -68,7 +45,7 @@
             size-lg="4"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" />
+              <ImageCard :article="article" :show-prompt="false" />
             </router-link>
           </ion-col>
 
@@ -108,6 +85,9 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonButtons,
+  IonButton,
+  IonIcon,
   IonContent,
   IonGrid,
   IonRow,
@@ -118,42 +98,23 @@ import {
   IonCardHeader,
   IonSkeletonText,
   IonText,
-  IonChip,
-  IonButton,
-  IonLabel,
   IonRefresher,
   IonRefresherContent,
   IonLoading,
 } from '@ionic/vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 
-const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
+const { articles, loading, error, loadAll, forceReload } = usePromptualData();
+const router = useRouter();
 const visibleCount = ref(12);
-const selectedTags = ref<string[]>([]);
-const showAllTags = ref(false);
-const TAG_PREVIEW_LIMIT = 24;
-
-const tagOptions = computed(() => {
-  const sorted = [...tags.value].sort((a, b) => a.name.localeCompare(b.name));
-  return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
-});
-
-const filteredArticles = computed(() => {
-  if (!selectedTags.value.length) {
-    return articles.value;
-  }
-  return articles.value.filter((article) =>
-    article.tags.some((tag) => selectedTags.value.includes(tag.id))
-  );
-});
-
-const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
-const canLoadMore = computed(() => visibleCount.value < filteredArticles.value.length);
+const visibleArticles = computed(() => articles.value.slice(0, visibleCount.value));
+const canLoadMore = computed(() => visibleCount.value < articles.value.length);
 
 function onInfinite(event: CustomEvent) {
-  visibleCount.value = Math.min(visibleCount.value + 12, filteredArticles.value.length);
+  visibleCount.value = Math.min(visibleCount.value + 12, articles.value.length);
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
@@ -164,24 +125,12 @@ async function onRefresh(event: CustomEvent) {
   target.complete?.();
 }
 
-function toggleTag(tagId: string) {
-  if (selectedTags.value.includes(tagId)) {
-    selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
-    return;
-  }
-  selectedTags.value = [...selectedTags.value, tagId];
+function goToTags() {
+  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
-function isSelected(tagId: string) {
-  return selectedTags.value.includes(tagId);
-}
-
-function clearTags() {
-  selectedTags.value = [];
-}
-
-watch([articles, selectedTags], () => {
-  visibleCount.value = Math.min(visibleCount.value, filteredArticles.value.length || 12);
+watch(articles, () => {
+  visibleCount.value = Math.min(visibleCount.value, articles.value.length || 12);
 });
 
 onMounted(() => {
@@ -209,30 +158,6 @@ onMounted(() => {
   height: 100%;
 }
 
-.tag-section {
-  padding: 0 20px 12px;
-}
-
-.tag-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.tag-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color--gray-45, #6b7280);
-}
-
-.tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
 
 .tag-list :deep(ion-chip) {
   font-weight: 700;

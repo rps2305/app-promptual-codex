@@ -9,8 +9,8 @@
         </ion-tab-button>
 
         <ion-tab-button tab="tab2" href="/tabs/tab2">
-          <ion-icon aria-hidden="true" :icon="searchOutline" />
-          <ion-label>Search</ion-label>
+          <ion-icon aria-hidden="true" :icon="pricetagsOutline" />
+          <ion-label>Tags</ion-label>
         </ion-tab-button>
 
         <ion-tab-button tab="tab3" href="/tabs/tab3">
@@ -24,5 +24,5 @@
 
 <script setup lang="ts">
 import { IonTabBar, IonTabButton, IonTabs, IonLabel, IonIcon, IonPage, IonRouterOutlet } from '@ionic/vue';
-import { imagesOutline, searchOutline, shuffleOutline } from 'ionicons/icons';
+import { imagesOutline, pricetagsOutline, shuffleOutline } from 'ionicons/icons';
 </script>

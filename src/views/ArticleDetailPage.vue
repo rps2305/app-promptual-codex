@@ -11,6 +11,11 @@
             {{ article?.title ?? 'Artwork' }}
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="goToTags">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -40,7 +45,7 @@
               <ion-icon slot="start" :icon="shareSocialOutline" />
               Share
             </ion-button>
-            <ion-button size="small" fill="solid" @click="saveToPhotos">
+            <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
               <ion-icon slot="start" :icon="downloadOutline" />
               Save
             </ion-button>
@@ -142,20 +147,24 @@ import {
   IonToast,
   IonIcon,
 } from '@ionic/vue';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
-import { downloadOutline, shareSocialOutline } from 'ionicons/icons';
+import { downloadOutline, searchOutline, shareSocialOutline } from 'ionicons/icons';
 import { usePromptualData } from '@/composables/usePromptualData';
+import { useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const { articles, error, loadAll, forceReload, loading } = usePromptualData();
 const articleId = computed(() => route.params.id as string);
 const article = computed(() => articles.value.find((item) => item.id === articleId.value));
 const actionMessage = ref('');
 const toastMessage = computed(() => actionMessage.value);
 const toastOpen = ref(false);
+const isIos = computed(() => Capacitor.getPlatform() === 'ios');
+const isAndroid = computed(() => Capacitor.getPlatform() === 'android');
 
 const formattedDate = computed(() => {
   if (!article.value?.created) {
@@ -186,6 +195,22 @@ async function fetchImageData() {
   if (!article.value?.imageUrl) {
     throw new Error('No image available.');
   }
+  if (Capacitor.isNativePlatform()) {
+    const response = await CapacitorHttp.request({
+      url: article.value.imageUrl,
+      method: 'GET',
+      responseType: 'blob',
+    });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error('Failed to download image.');
+    }
+    const contentTypeHeader = Object.entries(response.headers ?? {}).find(
+      ([key]) => key.toLowerCase() === 'content-type'
+    );
+    const mimeType = contentTypeHeader ? String(contentTypeHeader[1]) : 'image/jpeg';
+    const dataUrl = `data:${mimeType};base64,${String(response.data ?? '')}`;
+    return { dataUrl };
+  }
   const response = await fetch(article.value.imageUrl);
   if (!response.ok) {
     throw new Error('Failed to download image.');
@@ -197,7 +222,7 @@ async function fetchImageData() {
     reader.onerror = () => reject(new Error('Failed to read image.'));
     reader.readAsDataURL(blob);
   });
-  return { blob, dataUrl };
+  return { dataUrl };
 }
 
 async function shareImage() {
@@ -242,8 +267,23 @@ async function saveToPhotos() {
   }
   try {
     if (Capacitor.isNativePlatform()) {
+      let albumIdentifier: string | undefined;
+      if (isAndroid.value) {
+        const albumName = 'Promptual';
+        const { albums } = await Media.getAlbums();
+        const existing = albums.find((album) => album.name === albumName);
+        if (!existing) {
+          await Media.createAlbum({ name: albumName });
+          const refreshed = await Media.getAlbums();
+          albumIdentifier = refreshed.albums.find((album) => album.name === albumName)?.identifier;
+        } else {
+          albumIdentifier = existing.identifier;
+        }
+      }
       await Media.savePhoto({
         path: article.value.imageUrl,
+        albumIdentifier,
+        fileName: `promptual-${article.value.id}`,
       });
       showToast('Saved to Photos.');
       return;
@@ -256,6 +296,10 @@ async function saveToPhotos() {
   } catch (err) {
     showToast(err instanceof Error ? err.message : 'Save failed.');
   }
+}
+
+function goToTags() {
+  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
 async function onRefresh(event: CustomEvent) {

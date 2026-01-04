@@ -8,6 +8,11 @@
             Random
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="goToTags">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -48,7 +53,7 @@
             size-lg="4"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" />
+              <ImageCard :article="article" :show-prompt="false" />
             </router-link>
           </ion-col>
 
@@ -84,12 +89,13 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonButtons,
+  IonButton,
+  IonIcon,
   IonContent,
   IonGrid,
   IonRow,
   IonCol,
-  IonButton,
-  IonIcon,
   IonCard,
   IonCardHeader,
   IonSkeletonText,
@@ -98,13 +104,14 @@ import {
   IonRefresherContent,
   IonLoading,
 } from '@ionic/vue';
-import { RouterLink } from 'vue-router';
-import { shuffleOutline } from 'ionicons/icons';
+import { RouterLink, useRouter } from 'vue-router';
+import { searchOutline, shuffleOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 import type { PromptualArticle } from '@/services/promptualApi';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
+const router = useRouter();
 const randomArticles = ref<PromptualArticle[]>([]);
 const RANDOM_COUNT = 8;
 
@@ -118,17 +125,22 @@ function shuffle(list: PromptualArticle[]) {
 }
 
 function refreshRandom() {
-  if (!articles.value.length) {
+  const source = articles.value.filter((article) => Boolean(article?.id));
+  if (!source.length) {
     randomArticles.value = [];
     return;
   }
-  randomArticles.value = shuffle(articles.value).slice(0, RANDOM_COUNT);
+  randomArticles.value = shuffle(source).slice(0, RANDOM_COUNT);
 }
 
 async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
   target.complete?.();
+}
+
+function goToTags() {
+  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
 watch(

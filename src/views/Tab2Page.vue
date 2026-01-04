@@ -5,9 +5,14 @@
         <ion-title>
           <span class="title-row">
             <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
-            Search
+            Tags
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="toggleSearch">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -19,7 +24,7 @@
           <ion-title size="large">
             <span class="title-row">
               <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
-              Search
+              Tags
             </span>
           </ion-title>
         </ion-toolbar>
@@ -27,14 +32,27 @@
 
       <section class="page-section">
         <p class="page-kicker">Search by title, prompt, or tag.</p>
-        <ion-searchbar v-model="query" :debounce="300" placeholder="Try “portrait”, “flux”, “forest”…"></ion-searchbar>
+        <ion-searchbar
+          v-if="showSearch"
+          :value="query"
+          :debounce="300"
+          placeholder="Try “portrait”, “flux”, “forest”…"
+          @ionInput="onSearchInput"
+          @ionChange="onSearchInput"
+          @ionClear="onSearchClear"
+        ></ion-searchbar>
       </section>
 
       <section class="tag-section" v-if="tags.length">
-        <ion-text class="tag-label">Tags</ion-text>
+        <div class="tag-header">
+          <ion-text class="tag-label">Filter by tag</ion-text>
+          <ion-button v-if="selectedTags.length" size="small" fill="clear" @click="clearTags">
+            Clear
+          </ion-button>
+        </div>
         <div class="tag-list">
           <ion-chip
-            v-for="tag in tags"
+            v-for="tag in tagOptions"
             :key="tag.id"
             :outline="!isSelected(tag.id)"
             color="primary"
@@ -42,6 +60,14 @@
           >
             <ion-label>{{ tag.name }}</ion-label>
           </ion-chip>
+          <ion-button
+            v-if="tags.length > tagOptions.length"
+            size="small"
+            fill="clear"
+            @click="showAllTags = true"
+          >
+            Show all
+          </ion-button>
         </div>
       </section>
 
@@ -60,7 +86,7 @@
             size-lg="4"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" />
+              <ImageCard :article="article" :show-prompt="false" />
             </router-link>
           </ion-col>
 
@@ -96,6 +122,9 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonButtons,
+  IonButton,
+  IonIcon,
   IonContent,
   IonSearchbar,
   IonChip,
@@ -111,16 +140,26 @@ import {
   IonRefresherContent,
   IonLoading,
 } from '@ionic/vue';
-import { RouterLink } from 'vue-router';
+import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
+import { useRoute } from 'vue-router';
 
 const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
 const query = ref('');
 const selectedTags = ref<string[]>([]);
+const showAllTags = ref(false);
+const showSearch = ref(false);
+const TAG_PREVIEW_LIMIT = 24;
+const route = useRoute();
+
+const tagOptions = computed(() => {
+  const sorted = [...tags.value].sort((a, b) => a.name.localeCompare(b.name));
+  return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
+});
 
 const filteredArticles = computed(() => {
-  const normalizedQuery = query.value.trim().toLowerCase();
+  const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
   const hasTagFilter = selectedTags.value.length > 0;
 
   return articles.value.filter((article) => {
@@ -151,6 +190,23 @@ function isSelected(tagId: string) {
   return selectedTags.value.includes(tagId);
 }
 
+function clearTags() {
+  selectedTags.value = [];
+}
+
+function onSearchInput(event: CustomEvent) {
+  const detail = event.detail as { value?: string | null };
+  query.value = detail?.value ?? '';
+}
+
+function onSearchClear() {
+  query.value = '';
+}
+
+function toggleSearch() {
+  showSearch.value = !showSearch.value;
+}
+
 async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
@@ -158,6 +214,9 @@ async function onRefresh(event: CustomEvent) {
 }
 
 onMounted(() => {
+  if (route.query.focus === 'search') {
+    showSearch.value = true;
+  }
   loadAll();
 });
 </script>
@@ -185,6 +244,13 @@ onMounted(() => {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color--gray-45, #6b7280);
+}
+
+.tag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .tag-list {

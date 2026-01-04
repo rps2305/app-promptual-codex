@@ -6,7 +6,7 @@
     </div>
     <ion-card-header>
       <ion-card-title>{{ article.title }}</ion-card-title>
-      <ion-card-subtitle v-if="article.prompt">{{ promptSnippet }}</ion-card-subtitle>
+      <ion-card-subtitle v-if="showPrompt && promptSnippet">{{ promptSnippet }}</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
       <div class="image-card__tags">
@@ -28,10 +28,13 @@ import type { PromptualArticle } from '@/services/promptualApi';
 
 const props = defineProps<{
   article: PromptualArticle;
+  showPrompt?: boolean;
 }>();
 
+const showPrompt = computed(() => props.showPrompt ?? true);
+
 const promptSnippet = computed(() => {
-  const prompt = props.article.prompt.trim();
+  const prompt = String(props.article.prompt ?? '').trim();
   if (!prompt) {
     return '';
   }

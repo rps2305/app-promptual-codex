@@ -1,6 +1,20 @@
+import { CapacitorHttp } from '@capacitor/core';
+
 const DEFAULT_SITE_BASE = 'https://promptual.puntuale.nl';
-const API_BASE = typeof window === 'undefined' ? `${DEFAULT_SITE_BASE}/jsonapi` : '/jsonapi';
-const SITE_BASE = typeof window === 'undefined' ? DEFAULT_SITE_BASE : '';
+
+function isNativePlatform() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const capacitor = (window as typeof window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return capacitor?.isNativePlatform?.() ?? false;
+}
+
+const API_BASE =
+  typeof window === 'undefined' || isNativePlatform()
+    ? `${DEFAULT_SITE_BASE}/jsonapi`
+    : '/jsonapi';
+const SITE_BASE = typeof window === 'undefined' || isNativePlatform() ? DEFAULT_SITE_BASE : '';
 const CANONICAL_BASE = DEFAULT_SITE_BASE;
 const CACHE_TTL_MS = 1000 * 60 * 30;
 const ARTICLE_PAGE_LIMIT = 30;
@@ -83,6 +97,20 @@ function writeCache<T>(key: string, data: T) {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
+  if (isNativePlatform()) {
+    const response = await CapacitorHttp.request({
+      url,
+      method: 'GET',
+      headers: {
+        Accept: 'application/vnd.api+json',
+      },
+      responseType: 'json',
+    });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Request failed (${response.status})`);
+    }
+    return response.data as T;
+  }
   const response = await fetch(url, {
     headers: {
       Accept: 'application/vnd.api+json',
