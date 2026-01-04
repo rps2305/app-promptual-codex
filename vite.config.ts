@@ -16,6 +16,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/jsonapi': {
+        target: 'https://promptual.puntuale.nl',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/sites': {
+        target: 'https://promptual.puntuale.nl',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom'
