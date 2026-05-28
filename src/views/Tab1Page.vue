@@ -22,6 +22,15 @@
 
       <section class="page-section">
         <p class="page-kicker">{{ filteredArticles.length }} images</p>
+        <ion-searchbar
+          :value="query"
+          :debounce="300"
+          placeholder="Search by title, prompt, or tag…"
+          @ionInput="onSearchInput"
+          @ionChange="onSearchInput"
+          @ionClear="onSearchClear"
+          class="gallery-search"
+        ></ion-searchbar>
         <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
           <ion-segment-button value="show" title="Display all images regardless of content rating">
             <ion-label>All</ion-label>
@@ -75,7 +84,7 @@
             <div class="empty-state">
               <ion-text color="medium">
                 <p class="empty-text">No results found.</p>
-                <p class="empty-hint">Try adjusting the NSFW filter to see more images.</p>
+                <p class="empty-hint">Try a different search term or adjust the NSFW filter.</p>
               </ion-text>
             </div>
           </ion-col>
@@ -100,6 +109,7 @@ import {
   IonTitle,
   IonButton,
   IonContent,
+  IonSearchbar,
   IonGrid,
   IonRow,
   IonCol,
@@ -122,13 +132,29 @@ import { usePromptualData } from '@/composables/usePromptualData';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const visibleCount = ref(12);
+const query = ref('');
 const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 
 const filteredArticles = computed(() => {
+  const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
   const nsfwMode = nsfwFilter.value;
-  return nsfwMode === 'show'
-    ? articles.value
-    : articles.value.filter((a) => nsfwMode === 'hide' ? !a.nsfw : a.nsfw);
+
+  return articles.value.filter((article) => {
+    const matchesNsfw = nsfwMode === 'show'
+      ? true
+      : nsfwMode === 'hide'
+        ? !article.nsfw
+        : article.nsfw;
+
+    const tagNames = article.tags.map((tag) => tag.name.toLowerCase());
+    const matchesQuery = !normalizedQuery
+      ? true
+      : article.title.toLowerCase().includes(normalizedQuery) ||
+        article.prompt.toLowerCase().includes(normalizedQuery) ||
+        tagNames.some((name) => name.includes(normalizedQuery));
+
+    return matchesNsfw && matchesQuery;
+  });
 });
 
 const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
@@ -136,6 +162,17 @@ const canLoadMore = computed(() => visibleCount.value < filteredArticles.value.l
 
 function onNsfwChange(event: CustomEvent) {
   nsfwFilter.value = event.detail.value as 'show' | 'hide' | 'only';
+  visibleCount.value = 12;
+}
+
+function onSearchInput(event: CustomEvent) {
+  const detail = event.detail as { value?: string | null };
+  query.value = detail?.value ?? '';
+  visibleCount.value = 12;
+}
+
+function onSearchClear() {
+  query.value = '';
   visibleCount.value = 12;
 }
 
@@ -172,6 +209,11 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color--gray-45, #6b7280);
+}
+
+.gallery-search {
+  margin-bottom: 12px;
+  padding: 0;
 }
 
 .card-link {
