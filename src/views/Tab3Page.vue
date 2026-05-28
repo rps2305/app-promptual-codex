@@ -36,6 +36,19 @@
         </div>
       </section>
 
+      <section class="page-section nsfw-section">
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Safe</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </section>
 
       <ion-grid>
         <ion-row class="shuffle-row">
@@ -98,6 +111,9 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
 } from '@ionic/vue';
 import { shuffleOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
@@ -109,6 +125,7 @@ const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const randomArticles = ref<PromptualArticle[]>([]);
 const shuffleKey = ref(0);
 const RANDOM_COUNT = 8;
+const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 
 function shuffle(list: PromptualArticle[]) {
   const result = [...list];
@@ -120,13 +137,27 @@ function shuffle(list: PromptualArticle[]) {
 }
 
 function refreshRandom() {
-  const source = articles.value.filter((article) => Boolean(article?.id));
+  const source = articles.value.filter((article) => {
+    if (nsfwFilter.value === 'hide' && article.nsfw) {
+      return false;
+    }
+    if (nsfwFilter.value === 'only' && !article.nsfw) {
+      return false;
+    }
+    return true;
+  });
   if (!source.length) {
     randomArticles.value = [];
     return;
   }
   randomArticles.value = shuffle(source).slice(0, RANDOM_COUNT);
   shuffleKey.value += 1;
+}
+
+function onNsfwChange(event: CustomEvent) {
+  const value = event.detail.value as 'show' | 'hide' | 'only';
+  nsfwFilter.value = value;
+  refreshRandom();
 }
 
 async function onRefresh(event: CustomEvent) {
@@ -179,11 +210,7 @@ onMounted(() => {
   animation-delay: calc(var(--card-index, 0) * 70ms);
 }
 
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
-  animation: card-enter 0.35s ease-out both;
-  animation-delay: calc(var(--card-index, 0) * 70ms);
+.nsfw-section {
+  padding-top: 0;
 }
 </style>
