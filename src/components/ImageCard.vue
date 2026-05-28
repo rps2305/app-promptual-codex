@@ -2,15 +2,15 @@
   <figure
     class="gallery-item"
     :class="{ 'gallery-item--compact': compact, 'gallery-item--expanded': expanded }"
-    @click="$emit('select')"
   >
-    <div class="gallery-item__frame">
+    <div class="gallery-item__frame" @click="goToDetail">
       <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
-      <div v-else class="gallery-item__placeholder">Image unavailable</div>
+      <div v-else class="gallery-item__placeholder" @click="goToDetail">Image unavailable</div>
+      <div class="gallery-item__click-overlay" @click="goToDetail"></div>
     </div>
     <figcaption class="gallery-item__caption">
-      <h3 class="gallery-item__title">{{ article.title }}</h3>
-      <p v-if="promptSnippet && !compact" class="gallery-item__prompt">{{ promptSnippet }}</p>
+      <h3 class="gallery-item__title" @click="goToDetail">{{ article.title }}</h3>
+      <p v-if="promptSnippet && !compact" class="gallery-item__prompt" @click.stop="$emit('select')">{{ promptSnippet }}</p>
       <div v-if="!compact && !expanded && article.tags.length" class="gallery-item__tags-row">
         <span v-if="article.nsfw" class="gallery-item__tag gallery-item__tag--nsfw">NSFW</span>
         <span v-for="tag in article.tags.slice(0, 3)" class="gallery-item__tag">{{ tag.name }}</span>
@@ -62,6 +62,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { IonImg } from '@ionic/vue';
 import type { PromptualArticle } from '@/services/promptualApi';
 
@@ -74,6 +75,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   select: [];
 }>();
+
+const router = useRouter();
+
+function goToDetail() {
+  router.push(`/tabs/tab1/${props.article.id}`);
+}
 
 const promptSnippet = computed(() => {
   const prompt = String(props.article.prompt ?? '').trim();
@@ -110,6 +117,13 @@ const promptSnippet = computed(() => {
   inset: 0;
   border: 1px solid rgba(255, 255, 255, 0.25);
   pointer-events: none;
+}
+
+.gallery-item__click-overlay {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  z-index: 1;
 }
 
 @media (hover: hover) {
@@ -156,6 +170,7 @@ const promptSnippet = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .gallery-item--compact .gallery-item__title {
@@ -171,12 +186,17 @@ const promptSnippet = computed(() => {
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  cursor: pointer;
 }
 
 @media (hover: hover) {
   .gallery-item:hover .gallery-item__prompt {
     -webkit-line-clamp: 6;
   }
+}
+
+.gallery-item__prompt:hover {
+  color: var(--color--terracotta);
 }
 
 .gallery-item--compact .gallery-item__prompt {
