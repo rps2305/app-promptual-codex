@@ -99,24 +99,11 @@ body {
   line-height: 1.6875rem;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
+ion-content {
+  --background: transparent;
   background:
     radial-gradient(ellipse 90% 40% at 50% 0%, hsla(35, 40%, 88%, 0.5) 0%, transparent 70%),
     radial-gradient(ellipse 60% 30% at 20% 60%, hsla(35, 30%, 90%, 0.3) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-ion-content {
-  --background: transparent;
-}
-
-ion-content::part(scroll) {
-  position: relative;
-  z-index: 1;
 }
 
 ion-toolbar {
