@@ -28,7 +28,11 @@ const STORAGE_KEY = 'promptual:installPromptDismissed';
 const visible = ref(false);
 
 function isIOS() {
-  return /iPhone|iPad|iPod/.test(navigator.userAgent) && !('MSStream' in window);
+  const ua = navigator.userAgent;
+  return (
+    /iPhone|iPad|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  ) && !('MSStream' in window);
 }
 
 function isStandalone() {
