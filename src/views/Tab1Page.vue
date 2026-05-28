@@ -223,16 +223,17 @@ onMounted(() => {
 
 <style scoped>
 .page-section {
-  padding: 20px 20px 10px;
+  padding: 24px 20px 10px;
 }
 
 .page-kicker {
-  margin: 0 0 8px;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color--gray-45, #6b7280);
+  margin: 0 0 4px;
+  font-family: Lora, georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--color--gray-5);
 }
 
 .gallery-search {

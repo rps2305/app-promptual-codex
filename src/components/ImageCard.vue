@@ -92,10 +92,32 @@ const promptSnippet = computed(() => {
 }
 
 .gallery-item__frame {
+  position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 1.5px solid var(--color--gray-90);
-  background: hsl(40, 12%, 92%);
+  border: 1px solid var(--color--gray-85);
+  background: hsl(40, 10%, 90%);
+  padding: 6px;
+  transition: box-shadow 0.3s var(--ease-out-quart), transform 0.3s var(--ease-out-quart);
+  box-shadow:
+    0 1px 3px rgba(18, 14, 8, 0.04),
+    0 4px 12px rgba(18, 14, 8, 0.05);
+}
+
+.gallery-item__frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .gallery-item:hover .gallery-item__frame {
+    box-shadow:
+      0 2px 6px rgba(18, 14, 8, 0.06),
+      0 8px 28px rgba(18, 14, 8, 0.08);
+  }
 }
 
 .gallery-item--compact .gallery-item__frame {

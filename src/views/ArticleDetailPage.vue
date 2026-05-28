@@ -23,41 +23,44 @@
         <ion-refresher-content pulling-text="Pull to refresh" refreshing-spinner="crescent" />
       </ion-refresher>
       <section class="detail-hero" v-if="article">
-        <div
-          class="detail-hero__media"
-          :style="heroStyle"
-        >
+        <div class="detail-hero__media" :style="heroStyle">
           <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
           <div v-else class="detail-hero__placeholder">Image unavailable</div>
-        </div>
-        <div class="detail-hero__meta">
-          <p class="detail-kicker">{{ formattedDate }}</p>
-          <div class="detail-tags">
-            <ion-chip v-if="article.nsfw" color="danger">
-              <ion-label class="detail-tag-label">NSFW</ion-label>
-            </ion-chip>
-            <ion-chip v-for="tag in article.tags" :key="tag.id">
-              <ion-label class="detail-tag-label">{{ tag.name }}</ion-label>
-            </ion-chip>
+          <div class="detail-hero__overlay">
+            <h1 class="detail-hero__title">{{ article.title }}</h1>
           </div>
-          <div class="detail-actions">
-            <ion-button size="small" fill="outline" @click="shareImage">
-              <ion-icon slot="start" :icon="shareSocialOutline" />
+        </div>
+        <div class="detail-hero__bar">
+          <div class="detail-hero__tags">
+            <span v-if="article.nsfw" class="detail-hero__tag detail-hero__tag--nsfw">NSFW</span>
+            <span v-for="tag in article.tags" :key="tag.id" class="detail-hero__tag">{{ tag.name }}</span>
+          </div>
+          <p class="detail-hero__date">{{ formattedDate }}</p>
+          <div class="detail-hero__actions">
+            <button class="detail-hero__action" @click="shareImage">
+              <ion-icon :icon="shareSocialOutline" />
               Share
-            </ion-button>
-            <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
-              <ion-icon slot="start" :icon="downloadOutline" />
+            </button>
+            <button v-if="!isIos" class="detail-hero__action detail-hero__action--primary" @click="saveToPhotos">
+              <ion-icon :icon="downloadOutline" />
               Save
-            </ion-button>
-            <ion-text v-else class="detail-ios-hint" color="medium">Save via Share</ion-text>
+            </button>
+            <span v-else class="detail-ios-hint">Save via Share</span>
           </div>
         </div>
       </section>
 
       <section v-else class="detail-loading">
-        <ion-skeleton-text animated style="height: 240px" />
-        <ion-skeleton-text animated style="width: 60%" />
-        <ion-skeleton-text animated style="width: 90%" />
+        <div class="skeleton-item">
+          <div class="skeleton-item__frame">
+            <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+          </div>
+          <div class="skeleton-item__caption">
+            <ion-skeleton-text animated style="width: 75%; height: 22px; display: block" />
+            <ion-skeleton-text animated style="width: 50%; height: 14px; display: block" />
+            <ion-skeleton-text animated style="width: 90%; height: 14px; display: block" />
+          </div>
+        </div>
       </section>
 
       <section v-if="article" class="detail-section detail-prompt-section">
@@ -120,11 +123,10 @@ import {
   IonContent,
   IonImg,
   IonBackButton,
-  IonChip,
   IonSkeletonText,
   IonText,
   IonButton,
-  IonLabel,
+  IonIcon,
   IonRefresher,
   IonRefresherContent,
   IonLoading,
@@ -293,122 +295,195 @@ onMounted(() => {
 
 <style scoped>
 .detail-hero {
-  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .detail-hero__media {
-  border-radius: 20px;
+  position: relative;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.6);
-  aspect-ratio: 4 / 5;
+  background: hsl(40, 10%, 88%);
+  animation: hero-reveal 0.6s var(--ease-out-expo) both;
 }
 
 .detail-hero__placeholder {
   display: grid;
   place-items: center;
-  min-height: 240px;
-  color: rgba(78, 63, 40, 0.65);
+  min-height: 280px;
+  color: var(--color--gray-45);
   font-weight: 600;
 }
 
-.detail-hero__meta {
-  margin-top: 12px;
-}
-
-.detail-kicker {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(52, 43, 30, 0.65);
-}
-
-.detail-tags {
+.detail-hero__overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 40px 20px 24px;
+  background: linear-gradient(
+    to top,
+    hsla(35, 20%, 5%, 0.7) 0%,
+    hsla(35, 20%, 5%, 0.2) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
 }
 
-.detail-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.detail-tag-label {
+.detail-hero__title {
+  font-family: Lora, georgia, serif;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  line-height: 1.2;
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.detail-tags :deep(ion-chip) {
-  --background: var(--color--primary-50);
-  --color: #ffffff;
+.detail-hero__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color--gray-95);
 }
 
-.detail-tags :deep(ion-chip[color='danger']) {
-  --background: var(--color--red);
-  --color: #ffffff;
+.detail-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.detail-hero__tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color--gray-20);
+  background: hsl(35, 10%, 90%);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.detail-hero__tag--nsfw {
+  background: var(--color--red);
+  color: #fff;
+}
+
+.detail-hero__date {
+  font-size: 0.75rem;
+  color: var(--color--gray-45);
+  margin: 0;
+  margin-left: auto;
+}
+
+.detail-hero__actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.detail-hero__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color--gray-20);
+  background: hsl(35, 10%, 92%);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease;
+}
+
+.detail-hero__action:hover {
+  background: hsl(35, 10%, 86%);
+}
+
+.detail-hero__action--primary {
+  background: var(--color--terracotta);
+  color: #fff;
+}
+
+.detail-hero__action--primary:hover {
+  background: var(--color--terracotta-light);
+}
+
+.detail-ios-hint {
+  font-size: 0.75rem;
+  color: var(--color--gray-45);
+  display: inline-flex;
+  align-items: center;
 }
 
 .detail-section {
-  padding: 8px 16px 0;
+  padding: 0 20px 20px;
 }
 
 .detail-prompt-section,
 .detail-meta-section {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 16px 20px;
-  margin: 8px 16px 0;
-  box-shadow: 0 2px 8px rgba(18, 14, 8, 0.08);
+  background: hsl(40, 12%, 97%);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 0;
 }
 
 .detail-section-title {
   font-family: Lora, georgia, serif;
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin: 0 0 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 16px;
   color: var(--color--gray-5);
+  letter-spacing: -0.01em;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--color--gray-90);
 }
 
 .detail-prompt {
   white-space: pre-wrap;
-  line-height: 1.6;
-  color: var(--color--gray-5);
+  line-height: 1.7;
+  color: var(--color--gray-20);
   margin: 0;
+  font-size: 0.925rem;
 }
 
 .detail-negative {
-  margin-top: 12px;
+  margin-top: 14px;
   color: var(--color--red);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .detail-metadata {
   display: grid;
-  gap: 10px;
-  margin: 0 0 16px;
+  gap: 0;
+  margin: 0;
 }
 
 .detail-meta-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
-  padding-bottom: 10px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--color--gray-95);
 }
 
 .detail-meta-row:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .detail-metadata dt {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color--gray-20);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color--gray-45);
   flex-shrink: 0;
 }
 
@@ -417,18 +492,31 @@ onMounted(() => {
   font-size: 0.875rem;
   color: var(--color--gray-5);
   text-align: right;
+  font-family: Lora, georgia, serif;
   word-break: break-all;
 }
 
-.detail-ios-hint {
-  font-size: 0.8125rem;
-  display: inline-block;
-  margin-top: 4px;
+.detail-loading {
+  padding: 0;
+  display: grid;
+  gap: 0;
 }
 
-.detail-loading {
-  padding: 16px;
+.detail-loading .skeleton-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-loading .skeleton-item__frame {
+  aspect-ratio: auto;
+  height: 320px;
+  background: hsl(35, 10%, 91%);
+  border: none;
+}
+
+.detail-loading .skeleton-item__caption {
+  padding: 20px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 </style>
