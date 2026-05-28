@@ -175,6 +175,7 @@ import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
+import type { PromptualTag } from '@/services/promptualApi';
 
 const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
 const query = ref('');
@@ -193,10 +194,23 @@ const usedTagIds = computed(() => {
   return ids;
 });
 
+const usedModels = computed(() => {
+  const map = new Map<string, PromptualTag>();
+  for (const article of articles.value) {
+    if (article.model && !map.has(article.model.id)) {
+      map.set(article.model.id, article.model);
+    }
+  }
+  return [...map.values()];
+});
+
 const tagOptions = computed(() => {
-  const sorted = [...tags.value]
-    .filter((tag) => usedTagIds.value.has(tag.id))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const allTags = [...tags.value, ...usedModels.value]
+    .filter((tag) => usedTagIds.value.has(tag.id));
+  const unique = allTags.filter(
+    (tag, index, self) => self.findIndex((t) => t.id === tag.id) === index
+  );
+  const sorted = unique.sort((a, b) => a.name.localeCompare(b.name));
   return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
 });
 
