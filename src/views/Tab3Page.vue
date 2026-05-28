@@ -23,10 +23,10 @@
       <section class="page-section">
         <div class="random-header">
           <div>
-            <p class="page-kicker">Fresh picks from the gallery.</p>
+            <p class="page-kicker">{{ randomArticles.length }} images</p>
             <ion-text v-if="error" color="danger">{{ error }}</ion-text>
             <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
-              Retry
+              Try again
             </ion-button>
           </div>
           <ion-button size="small" color="secondary" @click="refreshRandom">
@@ -73,7 +73,7 @@
         </ion-row>
       </ion-grid>
 
-      <ion-loading :is-open="loading" message="Loading random picks..." />
+      <ion-loading :is-open="loading" message="Picking images…" />
     </ion-content>
   </ion-page>
 </template>

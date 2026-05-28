@@ -28,7 +28,7 @@
           :style="heroStyle"
         >
           <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
-          <div v-else class="detail-hero__placeholder">No image</div>
+          <div v-else class="detail-hero__placeholder">Image unavailable</div>
         </div>
         <div class="detail-hero__meta">
           <p class="detail-kicker">{{ formattedDate }}</p>
@@ -62,7 +62,7 @@
 
       <section v-if="article" class="detail-section detail-prompt-section">
         <h3 class="detail-section-title">Full Prompt</h3>
-        <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
+        <p class="detail-prompt">{{ article.prompt || 'No prompt' }}</p>
         <p v-if="article.negativePrompt" class="detail-negative">
           <strong>Negative prompt:</strong> {{ article.negativePrompt }}
         </p>
@@ -86,7 +86,7 @@
             <dd>{{ article.steps ?? 'Unknown' }}</dd>
           </div>
           <div class="detail-meta-row">
-            <dt>Guidance</dt>
+            <dt>CFG Scale</dt>
             <dd>{{ article.guidanceScale ?? 'Unknown' }}</dd>
           </div>
           <div class="detail-meta-row">
@@ -103,7 +103,7 @@
         <ion-text color="danger">{{ error }}</ion-text>
       </section>
 
-      <ion-loading :is-open="loading" message="Loading artwork..." />
+      <ion-loading :is-open="loading" message="Loading image…" />
       <ion-toast :is-open="toastOpen" :message="toastMessage" duration="2000" @didDismiss="toastOpen = false" />
     </ion-content>
   </ion-page>
@@ -175,7 +175,7 @@ function showToast(message: string) {
 
 async function fetchImageData() {
   if (!article.value?.imageUrl) {
-    throw new Error('No image available.');
+    throw new Error('No image to share.');
   }
   if (Capacitor.isNativePlatform()) {
     const response = await CapacitorHttp.request({
@@ -184,7 +184,7 @@ async function fetchImageData() {
       responseType: 'blob',
     });
     if (response.status < 200 || response.status >= 300) {
-      throw new Error('Failed to download image.');
+      throw new Error('Could not download the image.');
     }
     const contentTypeHeader = Object.entries(response.headers ?? {}).find(
       ([key]) => key.toLowerCase() === 'content-type'
@@ -195,13 +195,13 @@ async function fetchImageData() {
   }
   const response = await fetch(article.value.imageUrl);
   if (!response.ok) {
-    throw new Error('Failed to download image.');
+    throw new Error('Could not download the image.');
   }
   const blob = await response.blob();
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Failed to read image.'));
+    reader.onerror = () => reject(new Error('Could not read the image.'));
     reader.readAsDataURL(blob);
   });
   return { dataUrl };
@@ -236,15 +236,15 @@ async function shareImage() {
     } else if (article.value.imageUrl) {
       window.open(article.value.imageUrl, '_blank');
     }
-    showToast('Ready to share.');
+    showToast('Shared successfully');
   } catch (err) {
-    showToast(err instanceof Error ? err.message : 'Share failed.');
+    showToast(err instanceof Error ? err.message : 'Could not share this image.');
   }
 }
 
 async function saveToPhotos() {
   if (!article.value?.imageUrl) {
-    showToast('No image available.');
+    showToast('No image to save');
     return;
   }
   try {
@@ -267,16 +267,16 @@ async function saveToPhotos() {
         albumIdentifier,
         fileName: `promptual-${article.value.id}`,
       });
-      showToast('Saved to Photos.');
+      showToast('Saved to Photos');
       return;
     }
     const link = document.createElement('a');
     link.href = article.value.imageUrl;
     link.download = `${article.value.title}.png`;
     link.click();
-    showToast('Download started.');
+    showToast('Download started');
   } catch (err) {
-    showToast(err instanceof Error ? err.message : 'Save failed.');
+    showToast(err instanceof Error ? err.message : 'Could not save this image.');
   }
 }
 

@@ -2,7 +2,7 @@
   <ion-card class="image-card" :class="{ 'image-card--compact': compact }">
     <div class="image-card__media" :style="mediaStyle">
       <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
-      <div v-else class="image-card__placeholder">No image</div>
+      <div v-else class="image-card__placeholder">Image unavailable</div>
     </div>
     <ion-card-header>
       <ion-card-title>{{ article.title }}</ion-card-title>

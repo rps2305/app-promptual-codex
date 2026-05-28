@@ -106,7 +106,7 @@ async function fetchJson<T>(url: string): Promise<T> {
       responseType: 'json',
     });
     if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Request failed (${response.status})`);
+      throw new Error('Could not load data. Check your connection and try again.');
     }
     return response.data as T;
   }
@@ -116,7 +116,7 @@ async function fetchJson<T>(url: string): Promise<T> {
     },
   });
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+    throw new Error('Could not load data. Check your connection and try again.');
   }
   return response.json() as Promise<T>;
 }

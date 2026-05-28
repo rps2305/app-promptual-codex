@@ -45,7 +45,7 @@
         </ion-segment>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
         <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
-          Retry
+          Try again
         </ion-button>
       </section>
 
@@ -95,10 +95,10 @@
       </ion-grid>
 
       <ion-infinite-scroll v-if="canLoadMore" @ionInfinite="onInfinite">
-        <ion-infinite-scroll-content loading-text="Loading more art..." />
+        <ion-infinite-scroll-content loading-text="Loading more…" />
       </ion-infinite-scroll>
 
-      <ion-loading :is-open="loading" message="Loading gallery..." />
+      <ion-loading :is-open="loading" message="Loading images…" />
     </ion-content>
   </ion-page>
 </template>

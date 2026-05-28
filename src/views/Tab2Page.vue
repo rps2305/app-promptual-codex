@@ -85,7 +85,7 @@
       <section class="page-section">
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
         <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
-          Retry
+          Try again
         </ion-button>
       </section>
 
@@ -138,7 +138,7 @@
         <ion-infinite-scroll-content loading-spinner="crescent" />
       </ion-infinite-scroll>
 
-      <ion-loading :is-open="loading" message="Loading search..." />
+      <ion-loading :is-open="loading" message="Searching images…" />
     </ion-content>
   </ion-page>
 </template>
@@ -183,8 +183,20 @@ const showAllTags = ref(false);
 const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 const TAG_PREVIEW_LIMIT = 24;
 
+const usedTagIds = computed(() => {
+  const ids = new Set<string>();
+  for (const article of articles.value) {
+    for (const tag of article.tags) {
+      ids.add(tag.id);
+    }
+  }
+  return ids;
+});
+
 const tagOptions = computed(() => {
-  const sorted = [...tags.value].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...tags.value]
+    .filter((tag) => usedTagIds.value.has(tag.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
   return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
 });
 
