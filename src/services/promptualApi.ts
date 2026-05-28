@@ -10,7 +10,7 @@ function isNativePlatform() {
   return capacitor?.isNativePlatform?.() ?? false;
 }
 
-const isRootDeployment = typeof window !== 'undefined' && !isNativePlatform()
+const isRootDeployment = import.meta.env.DEV && !isNativePlatform()
   && import.meta.env.BASE_URL === '/';
 const API_BASE = isRootDeployment ? '/jsonapi' : `${DEFAULT_SITE_BASE}/jsonapi`;
 const SITE_BASE = isRootDeployment ? '' : DEFAULT_SITE_BASE;
