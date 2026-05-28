@@ -228,7 +228,7 @@ onMounted(() => {
 
 .skeleton-item__frame {
   aspect-ratio: 4 / 5;
-  background: hsl(35, 10%, 91%);
+  background: var(--color--gray-95);
   border: 1.5px solid var(--color--gray-90);
 }
 

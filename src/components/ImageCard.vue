@@ -12,7 +12,7 @@
       <p v-if="promptSnippet && !compact" class="gallery-item__prompt" @click.stop="$emit('select')">{{ promptSnippet }}</p>
       <div v-if="!compact && !expanded && article.tags.length" class="gallery-item__tags-row">
         <span v-if="article.nsfw" class="gallery-item__tag gallery-item__tag--nsfw">NSFW</span>
-        <span v-for="tag in article.tags.slice(0, 3)" class="gallery-item__tag">{{ tag.name }}</span>
+        <span v-for="tag in article.tags.slice(0, 3)" :key="tag.id" class="gallery-item__tag">{{ tag.name }}</span>
         <span v-if="article.tags.length > 3" class="gallery-item__tag">+{{ article.tags.length - 3 }}</span>
       </div>
     </figcaption>
@@ -46,7 +46,7 @@
       </dl>
       <div class="gallery-item__expanded-tags">
         <span v-if="article.nsfw" class="gallery-item__tag gallery-item__tag--nsfw">NSFW</span>
-        <span v-for="tag in article.tags" class="gallery-item__tag gallery-item__tag--expanded">{{ tag.name }}</span>
+        <span v-for="tag in article.tags" :key="tag.id" class="gallery-item__tag gallery-item__tag--expanded">{{ tag.name }}</span>
       </div>
       <router-link
         :to="`/tabs/tab1/${article.id}`"
@@ -70,7 +70,7 @@ const props = defineProps<{
   expanded?: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   select: [];
 }>();
 
@@ -101,7 +101,7 @@ const promptSnippet = computed(() => {
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border: 1px solid var(--color--gray-85);
-  background: hsl(40, 10%, 90%);
+  background: var(--color--gray-90);
   padding: 6px;
   cursor: pointer;
   touch-action: manipulation;
@@ -210,7 +210,7 @@ const promptSnippet = computed(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color--gray-20);
-  background: hsl(35, 10%, 90%);
+  background: var(--color--gray-90);
   padding: 1px 6px;
   border-radius: 3px;
 }

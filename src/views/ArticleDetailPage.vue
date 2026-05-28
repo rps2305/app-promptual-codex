@@ -301,7 +301,7 @@ onMounted(() => {
 .detail-hero__media {
   position: relative;
   overflow: hidden;
-  background: hsl(40, 10%, 88%);
+  background: var(--color--gray-90);
   animation: hero-reveal 0.6s var(--ease-out-expo) both;
 }
 
@@ -360,7 +360,7 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color--gray-20);
-  background: hsl(35, 10%, 90%);
+  background: var(--color--gray-90);
   padding: 2px 7px;
   border-radius: 3px;
 }
@@ -391,7 +391,7 @@ onMounted(() => {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color--gray-20);
-  background: hsl(35, 10%, 92%);
+  background: var(--color--gray-95);
   border: none;
   border-radius: 6px;
   padding: 6px 12px;
@@ -401,7 +401,7 @@ onMounted(() => {
 }
 
 .detail-hero__action:hover {
-  background: hsl(35, 10%, 86%);
+  background: var(--color--gray-90);
 }
 
 .detail-hero__action--primary {
@@ -426,7 +426,7 @@ onMounted(() => {
 
 .detail-prompt-section,
 .detail-meta-section {
-  background: hsl(40, 12%, 97%);
+  background: var(--color--gray-100);
   border-radius: 12px;
   padding: 20px 24px;
   margin: 0;
@@ -509,7 +509,7 @@ onMounted(() => {
 .detail-loading .skeleton-item__frame {
   aspect-ratio: auto;
   height: 320px;
-  background: hsl(35, 10%, 91%);
+  background: var(--color--gray-95);
   border: none;
 }
 

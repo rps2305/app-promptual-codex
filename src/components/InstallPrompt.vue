@@ -43,7 +43,9 @@ function dismiss() {
   visible.value = false;
   try {
     localStorage.setItem(STORAGE_KEY, '1');
-  } catch {}
+  } catch {
+    /* noop */
+  }
 }
 
 onMounted(() => {
@@ -63,7 +65,7 @@ onMounted(() => {
   right: 0;
   z-index: 9999;
   padding: 16px 16px 12px;
-  background: linear-gradient(180deg, hsl(40, 14%, 97%) 0%, hsl(40, 12%, 95%) 100%);
+  background: linear-gradient(180deg, var(--color--gray-100) 0%, var(--color--gray-95) 100%);
   border-bottom: 1px solid var(--color--gray-90);
   box-shadow: 0 4px 16px rgba(18, 14, 8, 0.1);
   animation: slideDown 0.35s var(--ease-out-expo) both;
