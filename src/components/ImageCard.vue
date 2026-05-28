@@ -4,9 +4,8 @@
     :class="{ 'gallery-item--compact': compact, 'gallery-item--expanded': expanded }"
   >
     <div class="gallery-item__frame" @click="goToDetail">
-      <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
+      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" />
       <div v-else class="gallery-item__placeholder" @click="goToDetail">Image unavailable</div>
-      <div class="gallery-item__click-overlay" @click="goToDetail"></div>
     </div>
     <figcaption class="gallery-item__caption">
       <h3 class="gallery-item__title" @click="goToDetail">{{ article.title }}</h3>
@@ -63,7 +62,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonImg } from '@ionic/vue';
 import type { PromptualArticle } from '@/services/promptualApi';
 
 const props = defineProps<{
@@ -119,13 +117,6 @@ const promptSnippet = computed(() => {
   pointer-events: none;
 }
 
-.gallery-item__click-overlay {
-  position: absolute;
-  inset: 0;
-  cursor: pointer;
-  z-index: 1;
-}
-
 @media (hover: hover) {
   .gallery-item:hover .gallery-item__frame {
     box-shadow:
@@ -138,12 +129,13 @@ const promptSnippet = computed(() => {
   aspect-ratio: 3 / 4;
 }
 
-.gallery-item ion-img::part(image) {
-  object-fit: cover;
+.gallery-item__frame img {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   transition: opacity 0.3s ease;
+  cursor: pointer;
 }
 
 .gallery-item__placeholder {

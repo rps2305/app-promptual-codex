@@ -24,7 +24,7 @@
       </ion-refresher>
       <section class="detail-hero" v-if="article">
         <div class="detail-hero__media" :style="heroStyle">
-          <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
+          <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
           <div v-else class="detail-hero__placeholder">Image unavailable</div>
           <div class="detail-hero__overlay">
             <h1 class="detail-hero__title">{{ article.title }}</h1>
@@ -121,7 +121,6 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonImg,
   IonBackButton,
   IonSkeletonText,
   IonText,
