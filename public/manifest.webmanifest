@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#f2efe9",
-  "background_color": "#f2efe9",
+  "background_color": "#8C3A28",
   "categories": ["art", "photography", "entertainment"],
   "icons": [
     { "src": "/icons/icon-48.webp", "sizes": "48x48", "type": "image/webp" },
