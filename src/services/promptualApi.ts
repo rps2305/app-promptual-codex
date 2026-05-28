@@ -16,10 +16,10 @@ const API_BASE =
     : '/jsonapi';
 const SITE_BASE = typeof window === 'undefined' || isNativePlatform() ? DEFAULT_SITE_BASE : '';
 const CANONICAL_BASE = DEFAULT_SITE_BASE;
-const CACHE_TTL_MS = 1000 * 60 * 30;
+const CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const ARTICLE_PAGE_LIMIT = 30;
 const TAG_PAGE_LIMIT = 100;
-const MAX_ARTICLES = 600;
+const MAX_ARTICLES = 2000;
 
 type RawArticle = Record<string, any>;
 type RawTag = Record<string, any>;
@@ -72,8 +72,8 @@ const storage = {
 };
 
 const cacheKey = {
-  articles: 'promptual:articles:v1',
-  tags: 'promptual:tags:v1',
+  articles: 'promptual:articles:v2',
+  tags: 'promptual:tags:v2',
 };
 
 function readCache<T>(key: string): CachePayload<T> | null {

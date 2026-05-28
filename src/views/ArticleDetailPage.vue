@@ -7,7 +7,7 @@
         </ion-buttons>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             {{ article?.title ?? 'Artwork' }}
           </span>
         </ion-title>
@@ -153,6 +153,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
 import { downloadOutline, searchOutline, shareSocialOutline } from 'ionicons/icons';
 import { usePromptualData } from '@/composables/usePromptualData';
+import AppLogo from '@/components/AppLogo.vue';
 import { useRouter } from 'vue-router';
 
 const route = useRoute();

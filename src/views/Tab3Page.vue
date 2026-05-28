@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             Random
           </span>
         </ion-title>
@@ -23,7 +23,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <AppLogo />
               Random
             </span>
           </ion-title>
@@ -35,12 +35,28 @@
           <div>
             <p class="page-kicker">Fresh picks from the gallery.</p>
             <ion-text v-if="error" color="danger">{{ error }}</ion-text>
+            <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
+              Retry
+            </ion-button>
           </div>
           <ion-button size="small" fill="outline" @click="refreshRandom">
             <ion-icon slot="start" :icon="shuffleOutline" />
             Refresh
           </ion-button>
         </div>
+      </section>
+      <section class="page-section">
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>Show All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Hide NSFW</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Only NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
       </section>
 
       <ion-grid>
@@ -83,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   IonPage,
   IonHeader,
@@ -103,10 +119,14 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
 } from '@ionic/vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { searchOutline, shuffleOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 import type { PromptualArticle } from '@/services/promptualApi';
 
@@ -114,6 +134,18 @@ const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const router = useRouter();
 const randomArticles = ref<PromptualArticle[]>([]);
 const RANDOM_COUNT = 8;
+const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
+
+const filteredArticles = computed(() => {
+  const nsfwMode = nsfwFilter.value;
+  return nsfwMode === 'show'
+    ? articles.value
+    : articles.value.filter((a) => nsfwMode === 'hide' ? !a.nsfw : a.nsfw);
+});
+
+function onNsfwChange(event: CustomEvent) {
+  nsfwFilter.value = event.detail.value as 'show' | 'hide' | 'only';
+}
 
 function shuffle(list: PromptualArticle[]) {
   const result = [...list];
@@ -125,7 +157,7 @@ function shuffle(list: PromptualArticle[]) {
 }
 
 function refreshRandom() {
-  const source = articles.value.filter((article) => Boolean(article?.id));
+  const source = filteredArticles.value.filter((article) => Boolean(article?.id));
   if (!source.length) {
     randomArticles.value = [];
     return;
@@ -152,6 +184,10 @@ watch(
   },
   { immediate: true }
 );
+
+watch(nsfwFilter, () => {
+  refreshRandom();
+});
 
 onMounted(() => {
   loadAll();

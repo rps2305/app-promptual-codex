@@ -8,7 +8,7 @@ const error = ref<string | null>(null);
 let hasLoaded = false;
 
 async function loadAll() {
-  if (hasLoaded) {
+  if (hasLoaded || loading.value) {
     return;
   }
   loading.value = true;

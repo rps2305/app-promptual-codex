@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             Tags
           </span>
         </ion-title>
@@ -23,7 +23,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <AppLogo />
               Tags
             </span>
           </ion-title>
@@ -61,25 +61,50 @@
             <ion-label>{{ tag.name }}</ion-label>
           </ion-chip>
           <ion-button
-            v-if="tags.length > tagOptions.length"
+            v-if="!showAllTags && tags.length > tagOptions.length"
             size="small"
             fill="clear"
             @click="showAllTags = true"
           >
             Show all
           </ion-button>
+          <ion-button
+            v-if="showAllTags"
+            size="small"
+            fill="clear"
+            @click="showAllTags = false"
+          >
+            Show less
+          </ion-button>
         </div>
+      </section>
+
+      <section class="page-section">
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>Show All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Hide NSFW</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Only NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
       </section>
 
       <section class="page-section">
         <ion-text class="result-count">{{ filteredArticles.length }} results</ion-text>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
+        <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
+          Retry
+        </ion-button>
       </section>
 
       <ion-grid>
         <ion-row>
           <ion-col
-            v-for="article in filteredArticles"
+            v-for="article in visibleArticles"
             :key="article.id"
             size="12"
             size-md="6"
@@ -107,8 +132,21 @@
               </ion-card>
             </ion-col>
           </template>
+
+          <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
+            <div class="empty-state">
+              <ion-text color="medium">
+                <p class="empty-text">No results found.</p>
+                <p class="empty-hint">Try a different search term or adjust your filters.</p>
+              </ion-text>
+            </div>
+          </ion-col>
         </ion-row>
       </ion-grid>
+
+      <ion-infinite-scroll :disabled="visibleCount >= filteredArticles.length" @ionInfinite="onInfinite">
+        <ion-infinite-scroll-content loading-spinner="crescent" />
+      </ion-infinite-scroll>
 
       <ion-loading :is-open="loading" message="Loading search..." />
     </ion-content>
@@ -116,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   IonPage,
   IonHeader,
@@ -139,9 +177,14 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
 } from '@ionic/vue';
 import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 import { useRoute } from 'vue-router';
 
@@ -150,6 +193,7 @@ const query = ref('');
 const selectedTags = ref<string[]>([]);
 const showAllTags = ref(false);
 const showSearch = ref(false);
+const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 const TAG_PREVIEW_LIMIT = 24;
 const route = useRoute();
 
@@ -161,6 +205,7 @@ const tagOptions = computed(() => {
 const filteredArticles = computed(() => {
   const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
   const hasTagFilter = selectedTags.value.length > 0;
+  const nsfwMode = nsfwFilter.value;
 
   return articles.value.filter((article) => {
     const tagNames = article.tags.map((tag) => tag.name.toLowerCase());
@@ -174,8 +219,37 @@ const filteredArticles = computed(() => {
         article.prompt.toLowerCase().includes(normalizedQuery) ||
         tagNames.some((name) => name.includes(normalizedQuery));
 
-    return matchesTagFilter && matchesQuery;
+    const matchesNsfw = nsfwMode === 'show'
+      ? true
+      : nsfwMode === 'hide'
+        ? !article.nsfw
+        : article.nsfw;
+
+    return matchesTagFilter && matchesQuery && matchesNsfw;
   });
+});
+
+const PAGE_SIZE = 24;
+const visibleCount = ref(PAGE_SIZE);
+const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
+
+function onNsfwChange(event: CustomEvent) {
+  const value = event.detail.value as 'show' | 'hide' | 'only';
+  nsfwFilter.value = value;
+}
+
+function onInfinite(event: CustomEvent) {
+  visibleCount.value = Math.min(visibleCount.value + PAGE_SIZE, filteredArticles.value.length);
+  const target = event.target as { complete?: () => void };
+  target.complete?.();
+}
+
+watch([query, selectedTags, nsfwFilter], () => {
+  visibleCount.value = PAGE_SIZE;
+});
+
+watch(articles, () => {
+  visibleCount.value = Math.min(visibleCount.value, articles.value.length || PAGE_SIZE);
 });
 
 function toggleTag(tagId: string) {
@@ -270,5 +344,24 @@ onMounted(() => {
   text-decoration: none;
   display: block;
   height: 100%;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.7;
 }
 </style>

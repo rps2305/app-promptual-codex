@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             Promptual Gallery
           </span>
         </ion-title>
@@ -23,7 +23,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <AppLogo />
               Promptual Gallery
             </span>
           </ion-title>
@@ -32,7 +32,21 @@
 
       <section class="page-section">
         <p class="page-kicker">AI-generated imagery from Promptual.</p>
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>Show All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Hide NSFW</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Only NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
+        <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
+          Retry
+        </ion-button>
       </section>
 
       <ion-grid>
@@ -66,6 +80,15 @@
               </ion-card>
             </ion-col>
           </template>
+
+          <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
+            <div class="empty-state">
+              <ion-text color="medium">
+                <p class="empty-text">No results found.</p>
+                <p class="empty-hint">Try adjusting the NSFW filter to see more images.</p>
+              </ion-text>
+            </div>
+          </ion-col>
         </ion-row>
       </ion-grid>
 
@@ -101,20 +124,38 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
 } from '@ionic/vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const router = useRouter();
 const visibleCount = ref(12);
-const visibleArticles = computed(() => articles.value.slice(0, visibleCount.value));
-const canLoadMore = computed(() => visibleCount.value < articles.value.length);
+const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
+
+const filteredArticles = computed(() => {
+  const nsfwMode = nsfwFilter.value;
+  return nsfwMode === 'show'
+    ? articles.value
+    : articles.value.filter((a) => nsfwMode === 'hide' ? !a.nsfw : a.nsfw);
+});
+
+const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
+const canLoadMore = computed(() => visibleCount.value < filteredArticles.value.length);
+
+function onNsfwChange(event: CustomEvent) {
+  nsfwFilter.value = event.detail.value as 'show' | 'hide' | 'only';
+  visibleCount.value = 12;
+}
 
 function onInfinite(event: CustomEvent) {
-  visibleCount.value = Math.min(visibleCount.value + 12, articles.value.length);
+  visibleCount.value = Math.min(visibleCount.value + 12, filteredArticles.value.length);
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
@@ -158,6 +199,24 @@ onMounted(() => {
   height: 100%;
 }
 
+.empty-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.7;
+}
 
 .tag-list :deep(ion-chip) {
   font-weight: 700;

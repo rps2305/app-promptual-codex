@@ -118,6 +118,8 @@ ion-title {
   height: 22px;
   border-radius: 6px;
   object-fit: cover;
+  background: var(--color--gray-20);
+  padding: 2px;
 }
 
 ion-tab-button ion-label {
