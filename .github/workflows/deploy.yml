@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_BASE: /app-promptual-codex/
+          VITE_BASE: /
       - run: touch dist/.nojekyll
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
