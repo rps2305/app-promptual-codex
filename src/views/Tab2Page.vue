@@ -21,12 +21,7 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">
-            <span class="title-row">
-              <AppLogo />
-              Tags
-            </span>
-          </ion-title>
+          <ion-title size="large">Tags</ion-title>
         </ion-toolbar>
       </ion-header>
 
@@ -45,7 +40,6 @@
 
       <section class="tag-section" v-if="tags.length">
         <div class="tag-header">
-          <ion-text class="tag-label">Filter by tag</ion-text>
           <ion-button v-if="selectedTags.length" size="small" fill="clear" @click="clearTags">
             Clear
           </ion-button>
@@ -313,17 +307,10 @@ onMounted(() => {
   padding: 0 20px 12px;
 }
 
-.tag-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color--gray-45, #6b7280);
-}
-
 .tag-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
 }
 

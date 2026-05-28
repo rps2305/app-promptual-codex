@@ -8,11 +8,6 @@
             Random
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,12 +16,7 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">
-            <span class="title-row">
-              <AppLogo />
-              Random
-            </span>
-          </ion-title>
+          <ion-title size="large">Random</ion-title>
         </ion-toolbar>
       </ion-header>
 
@@ -39,7 +29,7 @@
               Retry
             </ion-button>
           </div>
-          <ion-button size="small" fill="outline" @click="refreshRandom">
+          <ion-button size="small" color="secondary" @click="refreshRandom">
             <ion-icon slot="start" :icon="shuffleOutline" />
             Refresh
           </ion-button>
@@ -54,7 +44,7 @@
             :key="article.id"
             size="12"
             size-md="6"
-            size-lg="4"
+            size-lg="6"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
               <ImageCard :article="article" :show-prompt="false" />
@@ -63,11 +53,11 @@
 
           <template v-if="loading && !articles.length">
             <ion-col
-              v-for="index in 6"
+              v-for="index in 8"
               :key="`skeleton-${index}`"
               size="12"
               size-md="6"
-              size-lg="4"
+              size-lg="6"
             >
               <ion-card class="image-card">
                 <ion-skeleton-text animated style="height: 220px" />
@@ -93,7 +83,6 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButtons,
   IonButton,
   IonIcon,
   IonContent,
@@ -108,15 +97,13 @@ import {
   IonRefresherContent,
   IonLoading,
 } from '@ionic/vue';
-import { RouterLink, useRouter } from 'vue-router';
-import { searchOutline, shuffleOutline } from 'ionicons/icons';
+import { shuffleOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 import type { PromptualArticle } from '@/services/promptualApi';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
-const router = useRouter();
 const randomArticles = ref<PromptualArticle[]>([]);
 const RANDOM_COUNT = 8;
 
@@ -142,10 +129,6 @@ async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
   target.complete?.();
-}
-
-function goToTags() {
-  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
 watch(

@@ -53,7 +53,9 @@
   --color--gray-95: hsl(var(--color--gray-hue), var(--color--gray-saturation), 93%);
   --color--gray-100: hsl(var(--color--gray-hue), var(--color--gray-saturation), 97%);
   --color--gold: #fdca40;
+  --color--gold-dark: #b8860b;
   --color--red: #e33f1e;
+  --color--page: hsl(40, 18%, 95%);
 
   --ion-color-primary: var(--color--primary-50);
   --ion-color-primary-rgb: 27, 128, 228;
@@ -62,12 +64,12 @@
   --ion-color-primary-shade: var(--color--primary-60);
   --ion-color-primary-tint: var(--color--primary-80);
 
-  --ion-color-secondary: var(--color--gold);
-  --ion-color-secondary-rgb: 253, 202, 64;
-  --ion-color-secondary-contrast: #1b1b1b;
-  --ion-color-secondary-contrast-rgb: 27, 27, 27;
-  --ion-color-secondary-shade: #e0b33a;
-  --ion-color-secondary-tint: #fed15d;
+  --ion-color-secondary: var(--color--gold-dark);
+  --ion-color-secondary-rgb: 184, 134, 11;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #9e7509;
+  --ion-color-secondary-tint: #cf9c0f;
 
   --ion-color-tertiary: var(--color--gray-20);
   --ion-color-tertiary-rgb: 48, 52, 56;
@@ -84,7 +86,7 @@
 
 body {
   font-family: var(--ion-font-family);
-  background: #ffffff;
+  background: var(--color--page);
   color: var(--color--gray-5);
   font-size: 1rem;
   line-height: 1.6875rem;
@@ -132,16 +134,16 @@ ion-tab-button ion-label {
 ion-tab-bar {
   --background: #ffffff;
   --color: var(--color--gray-5);
-  --color-selected: #0b6bd3;
+  --color-selected: #b8860b;
   border-top: 1px solid var(--color--gray-95);
   height: 64px;
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -6px 16px rgba(18, 14, 8, 0.06);
 }
 
 ion-tab-button {
   --color: var(--color--gray-5);
-  --color-selected: #0b6bd3;
+  --color-selected: #b8860b;
 }
 
 ion-tab-button ion-icon {

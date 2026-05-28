@@ -8,11 +8,6 @@
             Gallery
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,12 +16,7 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">
-            <span class="title-row">
-              <AppLogo />
-              Promptual Gallery
-            </span>
-          </ion-title>
+          <ion-title size="large">Gallery</ion-title>
         </ion-toolbar>
       </ion-header>
 
@@ -108,9 +98,7 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButtons,
   IonButton,
-  IonIcon,
   IonContent,
   IonGrid,
   IonRow,
@@ -128,14 +116,11 @@ import {
   IonSegmentButton,
   IonLabel,
 } from '@ionic/vue';
-import { RouterLink, useRouter } from 'vue-router';
-import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
-const router = useRouter();
 const visibleCount = ref(12);
 const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 
@@ -164,10 +149,6 @@ async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
   target.complete?.();
-}
-
-function goToTags() {
-  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
 watch(articles, () => {

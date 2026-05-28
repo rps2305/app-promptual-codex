@@ -11,11 +11,6 @@
             {{ article?.title ?? 'Artwork' }}
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -119,7 +114,6 @@ import {
   IonTitle,
   IonContent,
   IonImg,
-  IonButtons,
   IonBackButton,
   IonChip,
   IonSkeletonText,
@@ -130,19 +124,16 @@ import {
   IonRefresherContent,
   IonLoading,
   IonToast,
-  IonIcon,
 } from '@ionic/vue';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
-import { downloadOutline, searchOutline, shareSocialOutline } from 'ionicons/icons';
+import { downloadOutline, shareSocialOutline } from 'ionicons/icons';
 import { usePromptualData } from '@/composables/usePromptualData';
 import AppLogo from '@/components/AppLogo.vue';
-import { useRouter } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter();
 const { articles, error, loadAll, forceReload, loading } = usePromptualData();
 const articleId = computed(() => route.params.id as string);
 const article = computed(() => articles.value.find((item) => item.id === articleId.value));
@@ -282,10 +273,6 @@ async function saveToPhotos() {
   } catch (err) {
     showToast(err instanceof Error ? err.message : 'Save failed.');
   }
-}
-
-function goToTags() {
-  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
 }
 
 async function onRefresh(event: CustomEvent) {
