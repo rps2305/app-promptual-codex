@@ -4,7 +4,7 @@
     :class="{ 'gallery-item--compact': compact, 'gallery-item--expanded': expanded }"
   >
     <div class="gallery-item__frame" @click="goToDetail">
-      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" />
+      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" @click="goToDetail" />
       <div v-else class="gallery-item__placeholder" @click="goToDetail">Image unavailable</div>
     </div>
     <figcaption class="gallery-item__caption">
@@ -103,6 +103,8 @@ const promptSnippet = computed(() => {
   border: 1px solid var(--color--gray-85);
   background: hsl(40, 10%, 90%);
   padding: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
   transition: box-shadow 0.3s var(--ease-out-quart), transform 0.3s var(--ease-out-quart);
   box-shadow:
     0 1px 3px rgba(18, 14, 8, 0.04),
