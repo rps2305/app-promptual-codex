@@ -63,9 +63,12 @@
             <div
               class="gallery-card"
               :class="{ 'gallery-card--expanded': expandedId === article.id }"
-              @click="toggleExpand(article.id)"
             >
-              <ImageCard :article="article" :expanded="expandedId === article.id" />
+              <ImageCard
+                :article="article"
+                :expanded="expandedId === article.id"
+                @select="toggleExpand(article.id)"
+              />
             </div>
           </ion-col>
 

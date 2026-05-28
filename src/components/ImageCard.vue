@@ -2,6 +2,7 @@
   <figure
     class="gallery-item"
     :class="{ 'gallery-item--compact': compact, 'gallery-item--expanded': expanded }"
+    @click="$emit('select')"
   >
     <div class="gallery-item__frame">
       <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
@@ -68,6 +69,10 @@ const props = defineProps<{
   article: PromptualArticle;
   compact?: boolean;
   expanded?: boolean;
+}>();
+
+const emit = defineEmits<{
+  select: [];
 }>();
 
 const promptSnippet = computed(() => {
