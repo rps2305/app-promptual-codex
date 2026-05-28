@@ -38,16 +38,18 @@
 
 
       <ion-grid>
-        <ion-row>
+        <ion-row class="shuffle-row">
           <ion-col
-            v-for="article in randomArticles"
-            :key="article.id"
+            v-for="(article, index) in randomArticles"
+            :key="`${article.id}-${shuffleKey}`"
             size="12"
             size-md="6"
             size-lg="6"
+            :style="{ '--card-index': index }"
+            class="random-card"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" :show-prompt="false" />
+              <ImageCard :article="article" />
             </router-link>
           </ion-col>
 
@@ -105,6 +107,7 @@ import type { PromptualArticle } from '@/services/promptualApi';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const randomArticles = ref<PromptualArticle[]>([]);
+const shuffleKey = ref(0);
 const RANDOM_COUNT = 8;
 
 function shuffle(list: PromptualArticle[]) {
@@ -123,6 +126,7 @@ function refreshRandom() {
     return;
   }
   randomArticles.value = shuffle(source).slice(0, RANDOM_COUNT);
+  shuffleKey.value += 1;
 }
 
 async function onRefresh(event: CustomEvent) {
@@ -171,5 +175,15 @@ onMounted(() => {
   text-decoration: none;
   display: block;
   height: 100%;
+  animation: card-enter 0.35s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
+}
+
+.card-link {
+  text-decoration: none;
+  display: block;
+  height: 100%;
+  animation: card-enter 0.35s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 70ms);
 }
 </style>

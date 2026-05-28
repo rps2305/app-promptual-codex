@@ -92,14 +92,15 @@
       <ion-grid>
         <ion-row>
           <ion-col
-            v-for="article in visibleArticles"
+            v-for="(article, index) in visibleArticles"
             :key="article.id"
             size="12"
             size-md="6"
             size-lg="3"
+            :style="{ '--card-index': index }"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" :show-prompt="false" />
+              <ImageCard :article="article" compact />
             </router-link>
           </ion-col>
 
@@ -123,9 +124,10 @@
 
           <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
             <div class="empty-state">
+              <ion-icon :icon="searchOutline" class="empty-icon" />
               <ion-text color="medium">
-                <p class="empty-text">No results found.</p>
-                <p class="empty-hint">Try a different search term, select a tag, or adjust the NSFW filter.</p>
+                <p class="empty-text">Nothing matched</p>
+                <p class="empty-hint">Try a broader search, pick a different tag, or loosen the NSFW filter — there's plenty more to explore.</p>
               </ion-text>
             </div>
           </ion-col>
@@ -167,7 +169,9 @@ import {
   IonSegmentButton,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonIcon,
 } from '@ionic/vue';
+import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
@@ -311,13 +315,23 @@ onMounted(() => {
   text-decoration: none;
   display: block;
   height: 100%;
+  animation: card-enter 0.4s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 40ms);
 }
 
 .empty-state {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 48px 20px;
   text-align: center;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  opacity: 0.35;
+  color: var(--color--gray-45);
 }
 
 .empty-text {
@@ -330,5 +344,6 @@ onMounted(() => {
   font-size: 0.875rem;
   margin: 0;
   opacity: 0.7;
+  max-width: 320px;
 }
 </style>

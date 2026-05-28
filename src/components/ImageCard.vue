@@ -1,15 +1,15 @@
 <template>
-  <ion-card class="image-card">
+  <ion-card class="image-card" :class="{ 'image-card--compact': compact }">
     <div class="image-card__media" :style="mediaStyle">
       <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
       <div v-else class="image-card__placeholder">No image</div>
     </div>
     <ion-card-header>
       <ion-card-title>{{ article.title }}</ion-card-title>
-      <ion-card-subtitle v-if="showPrompt && promptSnippet">{{ promptSnippet }}</ion-card-subtitle>
+      <ion-card-subtitle v-if="promptSnippet" class="card-prompt">{{ promptSnippet }}</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
-      <div class="image-card__tags">
+      <div v-if="!compact" class="image-card__tags">
         <ion-chip v-if="article.nsfw" color="danger">
           <ion-label>NSFW</ion-label>
         </ion-chip>
@@ -28,10 +28,8 @@ import type { PromptualArticle } from '@/services/promptualApi';
 
 const props = defineProps<{
   article: PromptualArticle;
-  showPrompt?: boolean;
+  compact?: boolean;
 }>();
-
-const showPrompt = computed(() => props.showPrompt ?? true);
 
 const promptSnippet = computed(() => {
   const prompt = String(props.article.prompt ?? '').trim();
@@ -104,5 +102,36 @@ const mediaStyle = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.card-prompt {
+  font-size: 0.8rem;
+  color: var(--color--gray-45);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  .image-card:hover .card-prompt {
+    -webkit-line-clamp: 8;
+  }
+}
+
+.image-card--compact :deep(ion-card-title) {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-card--compact .card-prompt {
+  display: none;
+}
+
+.image-card--compact .image-card__media {
+  aspect-ratio: 3 / 4;
 }
 </style>
