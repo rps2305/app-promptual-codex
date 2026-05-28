@@ -10,11 +10,10 @@ function isNativePlatform() {
   return capacitor?.isNativePlatform?.() ?? false;
 }
 
-const API_BASE =
-  typeof window === 'undefined' || isNativePlatform()
-    ? `${DEFAULT_SITE_BASE}/jsonapi`
-    : '/jsonapi';
-const SITE_BASE = typeof window === 'undefined' || isNativePlatform() ? DEFAULT_SITE_BASE : '';
+const isRootDeployment = typeof window !== 'undefined' && !isNativePlatform()
+  && import.meta.env.BASE_URL === '/';
+const API_BASE = isRootDeployment ? '/jsonapi' : `${DEFAULT_SITE_BASE}/jsonapi`;
+const SITE_BASE = isRootDeployment ? '' : DEFAULT_SITE_BASE;
 const CANONICAL_BASE = DEFAULT_SITE_BASE;
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const ARTICLE_PAGE_LIMIT = 30;
