@@ -8,11 +8,6 @@
             Tags
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="toggleSearch">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -26,15 +21,15 @@
       </ion-header>
 
       <section class="page-section">
-        <p class="page-kicker">Search by title, prompt, or tag.</p>
+        <p class="page-kicker">{{ filteredArticles.length }} results</p>
         <ion-searchbar
-          v-if="showSearch"
           :value="query"
           :debounce="300"
-          placeholder="Try “portrait”, “flux”, “forest”…"
+          placeholder="Search by title, prompt, or tag…"
           @ionInput="onSearchInput"
           @ionChange="onSearchInput"
           @ionClear="onSearchClear"
+          class="tags-search"
         ></ion-searchbar>
       </section>
 
@@ -88,7 +83,6 @@
       </section>
 
       <section class="page-section">
-        <ion-text class="result-count">{{ filteredArticles.length }} results</ion-text>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
         <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
           Retry
@@ -102,7 +96,7 @@
             :key="article.id"
             size="12"
             size-md="6"
-            size-lg="4"
+            size-lg="3"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
               <ImageCard :article="article" :show-prompt="false" />
@@ -111,11 +105,11 @@
 
           <template v-if="loading && !articles.length">
             <ion-col
-              v-for="index in 6"
+              v-for="index in 8"
               :key="`skeleton-${index}`"
               size="12"
               size-md="6"
-              size-lg="4"
+              size-lg="3"
             >
               <ion-card class="image-card">
                 <ion-skeleton-text animated style="height: 220px" />
@@ -154,9 +148,7 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButtons,
   IonButton,
-  IonIcon,
   IonContent,
   IonSearchbar,
   IonChip,
@@ -176,20 +168,16 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
 } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
-import { useRoute } from 'vue-router';
 
 const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
 const query = ref('');
 const selectedTags = ref<string[]>([]);
 const showAllTags = ref(false);
-const showSearch = ref(false);
 const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
 const TAG_PREVIEW_LIMIT = 24;
-const route = useRoute();
 
 const tagOptions = computed(() => {
   const sorted = [...tags.value].sort((a, b) => a.name.localeCompare(b.name));
@@ -271,10 +259,6 @@ function onSearchClear() {
   query.value = '';
 }
 
-function toggleSearch() {
-  showSearch.value = !showSearch.value;
-}
-
 async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
@@ -282,9 +266,6 @@ async function onRefresh(event: CustomEvent) {
 }
 
 onMounted(() => {
-  if (route.query.focus === 'search') {
-    showSearch.value = true;
-  }
   loadAll();
 });
 </script>
@@ -321,10 +302,9 @@ onMounted(() => {
   margin-top: 8px;
 }
 
-.result-count {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--color--gray-45, #6b7280);
+.tags-search {
+  margin-bottom: 12px;
+  padding: 0;
 }
 
 .card-link {

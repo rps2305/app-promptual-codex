@@ -97,7 +97,7 @@ ion-content {
 }
 
 ion-toolbar {
-  --background: #ffffff;
+  --background: hsl(40, 12%, 97%);
   --border-color: var(--color--gray-95);
   --color: var(--color--gray-5);
 }
@@ -132,10 +132,10 @@ ion-tab-button ion-label {
 }
 
 ion-tab-bar {
-  --background: #ffffff;
+  --background: hsl(40, 12%, 97%);
   --color: var(--color--gray-5);
   --color-selected: #b8860b;
-  border-top: 1px solid var(--color--gray-95);
+  border-top: 1px solid var(--color--gray-90);
   height: 64px;
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -6px 16px rgba(18, 14, 8, 0.06);
@@ -148,4 +148,8 @@ ion-tab-button {
 
 ion-tab-button ion-icon {
   font-size: 22px;
+}
+
+ion-segment-button::part(indicator) {
+  background: var(--color--gold);
 }

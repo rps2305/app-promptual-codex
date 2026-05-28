@@ -25,6 +25,7 @@
         <ion-searchbar
           :value="query"
           :debounce="300"
+          show-clear-button="always"
           placeholder="Search by title, prompt, or tag…"
           @ionInput="onSearchInput"
           @ionChange="onSearchInput"

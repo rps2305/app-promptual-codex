@@ -14,6 +14,11 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
+      <ion-header collapse="condense">
+        <ion-toolbar>
+          <ion-title size="large">{{ article?.title ?? 'Artwork' }}</ion-title>
+        </ion-toolbar>
+      </ion-header>
       <ion-refresher slot="fixed" @ionRefresh="onRefresh">
         <ion-refresher-content pulling-text="Pull to refresh" refreshing-spinner="crescent" />
       </ion-refresher>
@@ -90,7 +95,7 @@
           </div>
         </dl>
         <ion-button v-if="article.path" size="small" fill="outline" :href="article.path" target="_blank" rel="noopener">
-          View on Promptual
+          View original post
         </ion-button>
       </section>
 

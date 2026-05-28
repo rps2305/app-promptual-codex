@@ -19,7 +19,7 @@ async function loadAll() {
     tags.value = tagData;
     hasLoaded = true;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load data.';
+    error.value = err instanceof Error ? err.message : 'Could not reach Promptual. Check your connection and try again.';
   } finally {
     loading.value = false;
   }
