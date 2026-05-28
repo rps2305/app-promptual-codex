@@ -25,6 +25,7 @@
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
     "ionicons": "^7.0.0",
+    "vite-plugin-pwa": "^0.20.5",
     "vue": "^3.3.0",
     "vue-router": "^4.2.0"
   },
