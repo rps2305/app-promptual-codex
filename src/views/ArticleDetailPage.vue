@@ -49,6 +49,7 @@
               <ion-icon slot="start" :icon="downloadOutline" />
               Save
             </ion-button>
+            <ion-text v-else class="detail-ios-hint" color="medium">Save via Share</ion-text>
           </div>
         </div>
       </section>
@@ -59,55 +60,43 @@
         <ion-skeleton-text animated style="width: 90%" />
       </section>
 
-      <section v-if="article" class="detail-section">
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Full Prompt</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
-            <p v-if="article.negativePrompt" class="detail-negative">
-              <strong>Negative prompt:</strong> {{ article.negativePrompt }}
-            </p>
-          </ion-card-content>
-        </ion-card>
+      <section v-if="article" class="detail-section detail-prompt-section">
+        <h3 class="detail-section-title">Full Prompt</h3>
+        <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
+        <p v-if="article.negativePrompt" class="detail-negative">
+          <strong>Negative prompt:</strong> {{ article.negativePrompt }}
+        </p>
       </section>
 
-      <section v-if="article" class="detail-section">
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Metadata</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <dl class="detail-metadata">
-              <div>
-                <dt>Model</dt>
-                <dd>{{ article.model?.name ?? 'Unknown' }}</dd>
-              </div>
-              <div>
-                <dt>Resolution</dt>
-                <dd>
-                  {{ article.imageWidth && article.imageHeight ? `${article.imageWidth} × ${article.imageHeight}` : 'Unknown' }}
-                </dd>
-              </div>
-              <div>
-                <dt>Steps</dt>
-                <dd>{{ article.steps ?? 'Unknown' }}</dd>
-              </div>
-              <div>
-                <dt>Guidance</dt>
-                <dd>{{ article.guidanceScale ?? 'Unknown' }}</dd>
-              </div>
-              <div>
-                <dt>Seed</dt>
-                <dd>{{ article.seed ?? 'Unknown' }}</dd>
-              </div>
-            </dl>
-            <ion-button v-if="article.path" size="small" fill="outline" :href="article.path" target="_blank" rel="noopener">
-              View on Promptual
-            </ion-button>
-          </ion-card-content>
-        </ion-card>
+      <section v-if="article" class="detail-section detail-meta-section">
+        <h3 class="detail-section-title">Metadata</h3>
+        <dl class="detail-metadata">
+          <div class="detail-meta-row">
+            <dt>Model</dt>
+            <dd>{{ article.model?.name ?? 'Unknown' }}</dd>
+          </div>
+          <div class="detail-meta-row">
+            <dt>Resolution</dt>
+            <dd>
+              {{ article.imageWidth && article.imageHeight ? `${article.imageWidth} × ${article.imageHeight}` : 'Unknown' }}
+            </dd>
+          </div>
+          <div class="detail-meta-row">
+            <dt>Steps</dt>
+            <dd>{{ article.steps ?? 'Unknown' }}</dd>
+          </div>
+          <div class="detail-meta-row">
+            <dt>Guidance</dt>
+            <dd>{{ article.guidanceScale ?? 'Unknown' }}</dd>
+          </div>
+          <div class="detail-meta-row">
+            <dt>Seed</dt>
+            <dd>{{ article.seed ?? 'Unknown' }}</dd>
+          </div>
+        </dl>
+        <ion-button v-if="article.path" size="small" fill="outline" :href="article.path" target="_blank" rel="noopener">
+          View on Promptual
+        </ion-button>
       </section>
 
       <section v-if="error" class="detail-section">
@@ -132,10 +121,6 @@ import {
   IonImg,
   IonButtons,
   IonBackButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
   IonChip,
   IonSkeletonText,
   IonText,
@@ -378,37 +363,75 @@ onMounted(() => {
   padding: 8px 16px 0;
 }
 
+.detail-prompt-section,
+.detail-meta-section {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px 20px;
+  margin: 8px 16px 0;
+  box-shadow: 0 2px 8px rgba(18, 14, 8, 0.08);
+}
+
+.detail-section-title {
+  font-family: Lora, georgia, serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+  margin: 0 0 12px;
+  color: var(--color--gray-5);
+}
+
 .detail-prompt {
   white-space: pre-wrap;
-  line-height: 1.5;
-  color: rgba(32, 24, 14, 0.9);
+  line-height: 1.6;
+  color: var(--color--gray-5);
+  margin: 0;
 }
 
 .detail-negative {
   margin-top: 12px;
-  color: rgba(82, 26, 26, 0.8);
+  color: var(--color--red);
+  font-size: 0.875rem;
 }
 
 .detail-metadata {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin: 0 0 16px;
 }
 
-.detail-metadata div {
+.detail-meta-row {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color--gray-95);
+}
+
+.detail-meta-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .detail-metadata dt {
+  font-size: 0.875rem;
   font-weight: 600;
-  color: rgba(43, 29, 12, 0.8);
+  color: var(--color--gray-20);
+  flex-shrink: 0;
 }
 
 .detail-metadata dd {
   margin: 0;
-  color: rgba(43, 29, 12, 0.9);
+  font-size: 0.875rem;
+  color: var(--color--gray-5);
+  text-align: right;
+  word-break: break-all;
+}
+
+.detail-ios-hint {
+  font-size: 0.8125rem;
+  display: inline-block;
+  margin-top: 4px;
 }
 
 .detail-loading {

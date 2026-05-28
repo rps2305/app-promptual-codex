@@ -5,7 +5,7 @@
         <ion-title>
           <span class="title-row">
             <AppLogo />
-            Promptual Gallery
+            Gallery
           </span>
         </ion-title>
         <ion-buttons slot="end">
@@ -31,16 +31,16 @@
       </ion-header>
 
       <section class="page-section">
-        <p class="page-kicker">AI-generated imagery from Promptual.</p>
+        <p class="page-kicker">{{ filteredArticles.length }} images</p>
         <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
           <ion-segment-button value="show" title="Display all images regardless of content rating">
-            <ion-label>Show All</ion-label>
+            <ion-label>All</ion-label>
           </ion-segment-button>
           <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Hide NSFW</ion-label>
+            <ion-label>Safe</ion-label>
           </ion-segment-button>
           <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Only NSFW</ion-label>
+            <ion-label>NSFW</ion-label>
           </ion-segment-button>
         </ion-segment>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>

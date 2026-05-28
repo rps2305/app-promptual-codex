@@ -82,13 +82,13 @@
       <section class="page-section">
         <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
           <ion-segment-button value="show" title="Display all images regardless of content rating">
-            <ion-label>Show All</ion-label>
+            <ion-label>All</ion-label>
           </ion-segment-button>
           <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Hide NSFW</ion-label>
+            <ion-label>Safe</ion-label>
           </ion-segment-button>
           <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Only NSFW</ion-label>
+            <ion-label>NSFW</ion-label>
           </ion-segment-button>
         </ion-segment>
       </section>
@@ -137,7 +137,7 @@
             <div class="empty-state">
               <ion-text color="medium">
                 <p class="empty-text">No results found.</p>
-                <p class="empty-hint">Try a different search term or adjust your filters.</p>
+                <p class="empty-hint">Try a different search term, select a tag, or adjust the NSFW filter.</p>
               </ion-text>
             </div>
           </ion-col>
