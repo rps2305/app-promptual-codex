@@ -58,10 +58,15 @@
             size-md="6"
             size-lg="4"
             :style="{ '--card-index': index }"
+            class="gallery-col"
           >
-            <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" />
-            </router-link>
+            <div
+              class="gallery-card"
+              :class="{ 'gallery-card--expanded': expandedId === article.id }"
+              @click="toggleExpand(article.id)"
+            >
+              <ImageCard :article="article" :expanded="expandedId === article.id" />
+            </div>
           </ion-col>
 
           <template v-if="loading && !articles.length">
@@ -72,13 +77,15 @@
               size-md="6"
               size-lg="4"
             >
-              <ion-card class="image-card">
-                <ion-skeleton-text animated style="height: 220px" />
-                <ion-card-header>
-                  <ion-skeleton-text animated style="width: 80%" />
-                  <ion-skeleton-text animated style="width: 60%" />
-                </ion-card-header>
-              </ion-card>
+              <div class="skeleton-item">
+                <div class="skeleton-item__frame">
+                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+                </div>
+                <div class="skeleton-item__caption">
+                  <ion-skeleton-text animated style="width: 70%; height: 14px; display: block" />
+                  <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
+                </div>
+              </div>
             </ion-col>
           </template>
 
@@ -118,8 +125,6 @@ import {
   IonCol,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonCard,
-  IonCardHeader,
   IonSkeletonText,
   IonText,
   IonRefresher,
@@ -138,10 +143,15 @@ import { usePromptualData } from '@/composables/usePromptualData';
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const visibleCount = ref(12);
 const query = ref('');
+const expandedId = ref<string | null>(null);
 const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
 
 function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
   localStorage.setItem('promptual:nsfwFilter', value);
+}
+
+function toggleExpand(id: string) {
+  expandedId.value = expandedId.value === id ? null : id;
 }
 
 const filteredArticles = computed(() => {
@@ -227,12 +237,37 @@ onMounted(() => {
   padding: 0;
 }
 
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
+.gallery-col {
   animation: card-enter 0.4s ease-out both;
   animation-delay: calc(var(--card-index, 0) * 50ms);
+}
+
+.gallery-card {
+  cursor: pointer;
+  height: 100%;
+  transition: box-shadow 0.2s ease;
+}
+
+.gallery-card--expanded {
+  border-bottom: 2px solid var(--color--terracotta-light);
+  padding-bottom: 12px;
+}
+
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-item__frame {
+  aspect-ratio: 4 / 5;
+  background: hsl(35, 10%, 91%);
+  border: 1.5px solid var(--color--gray-90);
+}
+
+.skeleton-item__caption {
+  padding: 8px 0 0;
+  display: grid;
+  gap: 6px;
 }
 
 .empty-state {

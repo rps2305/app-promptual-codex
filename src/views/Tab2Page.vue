@@ -112,13 +112,14 @@
               size-md="6"
               size-lg="3"
             >
-              <ion-card class="image-card">
-                <ion-skeleton-text animated style="height: 220px" />
-                <ion-card-header>
-                  <ion-skeleton-text animated style="width: 80%" />
-                  <ion-skeleton-text animated style="width: 60%" />
-                </ion-card-header>
-              </ion-card>
+              <div class="skeleton-item">
+                <div class="skeleton-item__frame skeleton-item__frame--compact">
+                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+                </div>
+                <div class="skeleton-item__caption">
+                  <ion-skeleton-text animated style="width: 60%; height: 12px; display: block" />
+                </div>
+              </div>
             </ion-col>
           </template>
 
@@ -157,8 +158,7 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonCard,
-  IonCardHeader,
+
   IonSkeletonText,
   IonText,
   IonLabel,
@@ -376,5 +376,26 @@ onMounted(() => {
   margin: 0;
   opacity: 0.7;
   max-width: 320px;
+}
+
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-item__frame--compact {
+  aspect-ratio: 3 / 4;
+}
+
+.skeleton-item__frame {
+  aspect-ratio: 4 / 5;
+  background: hsl(35, 10%, 91%);
+  border: 1.5px solid var(--color--gray-90);
+}
+
+.skeleton-item__caption {
+  padding: 8px 0 0;
+  display: grid;
+  gap: 6px;
 }
 </style>
