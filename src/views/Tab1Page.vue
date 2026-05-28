@@ -138,7 +138,11 @@ import { usePromptualData } from '@/composables/usePromptualData';
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const visibleCount = ref(12);
 const query = ref('');
-const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
+const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+
+function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
+  localStorage.setItem('promptual:nsfwFilter', value);
+}
 
 const filteredArticles = computed(() => {
   const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
@@ -166,7 +170,9 @@ const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCo
 const canLoadMore = computed(() => visibleCount.value < filteredArticles.value.length);
 
 function onNsfwChange(event: CustomEvent) {
-  nsfwFilter.value = event.detail.value as 'show' | 'hide' | 'only';
+  const value = event.detail.value as 'show' | 'hide' | 'only';
+  nsfwFilter.value = value;
+  saveNsfwFilter(value);
   visibleCount.value = 12;
 }
 

@@ -125,7 +125,11 @@ const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const randomArticles = ref<PromptualArticle[]>([]);
 const shuffleKey = ref(0);
 const RANDOM_COUNT = 8;
-const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
+const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+
+function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
+  localStorage.setItem('promptual:nsfwFilter', value);
+}
 
 function shuffle(list: PromptualArticle[]) {
   const result = [...list];
@@ -157,6 +161,7 @@ function refreshRandom() {
 function onNsfwChange(event: CustomEvent) {
   const value = event.detail.value as 'show' | 'hide' | 'only';
   nsfwFilter.value = value;
+  saveNsfwFilter(value);
   refreshRandom();
 }
 

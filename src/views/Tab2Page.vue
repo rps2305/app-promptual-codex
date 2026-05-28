@@ -181,7 +181,11 @@ const { articles, tags, loading, error, loadAll, forceReload } = usePromptualDat
 const query = ref('');
 const selectedTags = ref<string[]>([]);
 const showAllTags = ref(false);
-const nsfwFilter = ref<'show' | 'hide' | 'only'>('show');
+const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+
+function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
+  localStorage.setItem('promptual:nsfwFilter', value);
+}
 const TAG_PREVIEW_LIMIT = 24;
 
 const usedTagIds = computed(() => {
@@ -248,6 +252,7 @@ const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCo
 function onNsfwChange(event: CustomEvent) {
   const value = event.detail.value as 'show' | 'hide' | 'only';
   nsfwFilter.value = value;
+  saveNsfwFilter(value);
 }
 
 function onInfinite(event: CustomEvent) {
