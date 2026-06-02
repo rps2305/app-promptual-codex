@@ -322,8 +322,8 @@ onMounted(() => {
   padding: 40px 20px 24px;
   background: linear-gradient(
     to top,
-    hsla(35, 20%, 5%, 0.7) 0%,
-    hsla(35, 20%, 5%, 0.2) 40%,
+    hsla(35, 24%, 4%, 0.86) 0%,
+    hsla(35, 24%, 4%, 0.38) 46%,
     transparent 70%
   );
   pointer-events: none;
@@ -332,11 +332,11 @@ onMounted(() => {
 .detail-hero__title {
   font-family: Lora, georgia, serif;
   font-weight: 700;
-  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-size: clamp(1.7rem, 5vw, 2.8rem);
   line-height: 1.2;
   color: #fff;
   margin: 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.45);
 }
 
 .detail-hero__bar {
@@ -345,7 +345,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border-bottom: 1px solid var(--color--gray-95);
+  border-bottom: 2px solid var(--color--gray-85);
 }
 
 .detail-hero__tags {
@@ -356,13 +356,14 @@ onMounted(() => {
 
 .detail-hero__tag {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color--gray-20);
   background: var(--color--gray-90);
-  padding: 2px 7px;
-  border-radius: 3px;
+  padding: 3px 9px;
+  border: 1px solid var(--color--gray-85);
+  border-radius: 999px;
 }
 
 .detail-hero__tag--nsfw {
@@ -389,12 +390,12 @@ onMounted(() => {
   align-items: center;
   gap: 5px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color--gray-20);
+  font-weight: 700;
+  color: var(--color--gray-5);
   background: var(--color--gray-95);
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 999px;
+  padding: 8px 14px;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s ease;
@@ -427,7 +428,8 @@ onMounted(() => {
 .detail-prompt-section,
 .detail-meta-section {
   background: var(--color--gray-100);
-  border-radius: 12px;
+  border: 2px solid var(--color--gray-85);
+  border-radius: 16px;
   padding: 20px 24px;
   margin: 0;
 }
@@ -440,7 +442,7 @@ onMounted(() => {
   color: var(--color--gray-5);
   letter-spacing: -0.01em;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--color--gray-90);
+  border-bottom: 3px solid var(--color--terracotta-light);
 }
 
 .detail-prompt {
@@ -470,7 +472,7 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--color--gray-95);
+  border-bottom: 2px solid var(--color--gray-85);
 }
 
 .detail-meta-row:last-child {
@@ -479,7 +481,7 @@ onMounted(() => {
 
 .detail-metadata dt {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color--gray-45);

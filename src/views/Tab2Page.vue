@@ -314,9 +314,10 @@ onMounted(() => {
   margin: 0 0 4px;
   font-family: Lora, georgia, serif;
   font-weight: 700;
+  text-transform: uppercase;
   font-size: clamp(1.4rem, 4vw, 2.4rem);
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.035em;
   color: var(--color--gray-5);
 }
 
@@ -362,13 +363,13 @@ onMounted(() => {
 .empty-icon {
   font-size: 2.5rem;
   margin-bottom: 16px;
-  opacity: 0.35;
+  opacity: 0.55;
   color: var(--color--gray-45);
 }
 
 .empty-text {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 8px;
 }
 
@@ -390,8 +391,8 @@ onMounted(() => {
 
 .skeleton-item__frame {
   aspect-ratio: 4 / 5;
-  background: var(--color--gray-95);
-  border: 1.5px solid var(--color--gray-90);
+  background: var(--color--gray-90);
+  border: 2px solid var(--color--gray-20);
 }
 
 .skeleton-item__caption {

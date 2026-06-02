@@ -196,9 +196,10 @@ onMounted(() => {
   margin: 0;
   font-family: Lora, georgia, serif;
   font-weight: 700;
+  text-transform: uppercase;
   font-size: clamp(1.8rem, 5vw, 3rem);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.035em;
   color: var(--color--gray-5);
 }
 
@@ -228,8 +229,8 @@ onMounted(() => {
 
 .skeleton-item__frame {
   aspect-ratio: 4 / 5;
-  background: var(--color--gray-95);
-  border: 1.5px solid var(--color--gray-90);
+  background: var(--color--gray-90);
+  border: 2px solid var(--color--gray-20);
 }
 
 .skeleton-item__caption {
