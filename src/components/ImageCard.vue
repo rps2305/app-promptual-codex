@@ -100,15 +100,15 @@ const promptSnippet = computed(() => {
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 1px solid var(--color--gray-85);
-  background: var(--color--gray-90);
-  padding: 6px;
+  border: 2px solid var(--color--gray-20);
+  background: linear-gradient(135deg, var(--color--gray-20), var(--color--terracotta));
+  padding: 8px;
   cursor: pointer;
   touch-action: manipulation;
   transition: box-shadow 0.3s var(--ease-out-quart), transform 0.3s var(--ease-out-quart);
   box-shadow:
-    0 1px 3px rgba(18, 14, 8, 0.04),
-    0 4px 12px rgba(18, 14, 8, 0.05);
+    0 3px 0 var(--color--gray-20),
+    0 12px 28px rgba(18, 14, 8, 0.18);
 }
 
 .gallery-item__frame::after {
@@ -122,8 +122,8 @@ const promptSnippet = computed(() => {
 @media (hover: hover) {
   .gallery-item:hover .gallery-item__frame {
     box-shadow:
-      0 2px 6px rgba(18, 14, 8, 0.06),
-      0 8px 28px rgba(18, 14, 8, 0.08);
+      0 4px 0 var(--color--gray-20),
+      0 18px 36px rgba(18, 14, 8, 0.24);
   }
 }
 
@@ -156,8 +156,8 @@ const promptSnippet = computed(() => {
 
 .gallery-item__title {
   font-family: Lora, georgia, serif;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--color--gray-5);
   margin: 0;
   line-height: 1.35;
@@ -172,8 +172,9 @@ const promptSnippet = computed(() => {
 }
 
 .gallery-item__prompt {
-  font-size: 0.8rem;
-  color: var(--color--gray-45);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color--gray-20);
   margin: 2px 0 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -200,19 +201,20 @@ const promptSnippet = computed(() => {
 .gallery-item__tags-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .gallery-item__tag {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color--gray-20);
   background: var(--color--gray-90);
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 3px 8px;
+  border: 1px solid var(--color--gray-85);
+  border-radius: 999px;
 }
 
 .gallery-item__tag--nsfw {
@@ -227,8 +229,8 @@ const promptSnippet = computed(() => {
 }
 
 .gallery-item__expanded-divider {
-  height: 1px;
-  background: var(--color--gray-95);
+  height: 2px;
+  background: var(--color--terracotta-light);
   margin: 8px 0 10px;
 }
 
@@ -283,7 +285,7 @@ const promptSnippet = computed(() => {
 .gallery-item__detail-link {
   display: inline-block;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color--terracotta);
   text-decoration: none;
   padding: 6px 0;
