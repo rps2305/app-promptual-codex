@@ -7,14 +7,14 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 let hasLoaded = false;
 
-async function loadAll() {
+async function loadAll(force = false) {
   if (hasLoaded || loading.value) {
     return;
   }
   loading.value = true;
   error.value = null;
   try {
-    const [articleData, tagData] = await Promise.all([getArticles(), getTags()]);
+    const [articleData, tagData] = await Promise.all([getArticles(force), getTags(force)]);
     articles.value = articleData;
     tags.value = tagData;
     hasLoaded = true;
@@ -27,7 +27,7 @@ async function loadAll() {
 
 function forceReload() {
   hasLoaded = false;
-  return loadAll();
+  return loadAll(true);
 }
 
 export function usePromptualData() {

@@ -27,6 +27,7 @@
           :debounce="300"
           show-clear-button="always"
           placeholder="Search by title, prompt, or tag…"
+          aria-label="Search images by title, prompt, or tag"
           @ionInput="onSearchInput"
           @ionChange="onSearchInput"
           @ionClear="onSearchClear"
@@ -49,7 +50,29 @@
         </ion-button>
       </section>
 
-      <ion-grid>
+      <ion-grid v-if="loading && !articles.length">
+        <ion-row>
+          <ion-col
+            v-for="index in 6"
+            :key="`skeleton-${index}`"
+            size="12"
+            size-md="6"
+            size-lg="4"
+          >
+            <div class="skeleton-item">
+              <div class="skeleton-item__frame">
+                <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+              </div>
+              <div class="skeleton-item__caption">
+                <ion-skeleton-text animated style="width: 70%; height: 14px; display: block" />
+                <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
+              </div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <ion-grid v-else>
         <ion-row>
           <ion-col
             v-for="(article, index) in visibleArticles"
@@ -67,30 +90,11 @@
               <ImageCard
                 :article="article"
                 :expanded="expandedId === article.id"
+                linked
                 @select="toggleExpand(article.id)"
               />
             </div>
           </ion-col>
-
-          <template v-if="loading && !articles.length">
-            <ion-col
-              v-for="index in 6"
-              :key="`skeleton-${index}`"
-              size="12"
-              size-md="6"
-              size-lg="4"
-            >
-              <div class="skeleton-item">
-                <div class="skeleton-item__frame">
-                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
-                </div>
-                <div class="skeleton-item__caption">
-                  <ion-skeleton-text animated style="width: 70%; height: 14px; display: block" />
-                  <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
-                </div>
-              </div>
-            </ion-col>
-          </template>
 
           <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
             <div class="empty-state">
@@ -303,8 +307,4 @@ onMounted(() => {
   max-width: 320px;
 }
 
-.tag-list :deep(ion-chip) {
-  font-weight: 700;
-  font-size: 0.85rem;
-}
 </style>

@@ -26,11 +26,9 @@
         <div class="detail-hero__media" :style="heroStyle">
           <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
           <div v-else class="detail-hero__placeholder">Image unavailable</div>
-          <div class="detail-hero__overlay">
-            <h1 class="detail-hero__title">{{ article.title }}</h1>
-          </div>
         </div>
         <div class="detail-hero__bar">
+          <h1 class="detail-hero__title">{{ article.title }}</h1>
           <div class="detail-hero__tags">
             <span v-if="article.nsfw" class="detail-hero__tag detail-hero__tag--nsfw">NSFW</span>
             <span v-for="tag in article.tags" :key="tag.id" class="detail-hero__tag">{{ tag.name }}</span>
@@ -65,7 +63,7 @@
 
       <section v-if="article" class="detail-section detail-prompt-section">
         <h3 class="detail-section-title">Full Prompt</h3>
-        <p class="detail-prompt">{{ article.prompt || 'No prompt' }}</p>
+        <p class="detail-prompt">{{ displayPrompt || 'No prompt' }}</p>
         <p v-if="article.negativePrompt" class="detail-negative">
           <strong>Negative prompt:</strong> {{ article.negativePrompt }}
         </p>
@@ -121,6 +119,7 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
+  IonButtons,
   IonBackButton,
   IonSkeletonText,
   IonText,
@@ -167,6 +166,22 @@ const heroStyle = computed(() => {
     return undefined;
   }
   return { aspectRatio: `${article.value.imageWidth} / ${article.value.imageHeight}` };
+});
+
+const displayPrompt = computed(() => {
+  const prompt = String(article.value?.prompt ?? '').trim();
+  const negativePrompt = String(article.value?.negativePrompt ?? '').trim();
+
+  if (!prompt || !negativePrompt) {
+    return prompt;
+  }
+
+  const markerIndex = prompt.toLowerCase().lastIndexOf('negative prompt:');
+  if (markerIndex === -1) {
+    return prompt;
+  }
+
+  return prompt.slice(0, markerIndex).trim();
 });
 
 function showToast(message: string) {
@@ -225,13 +240,13 @@ async function shareImage() {
       const uri = (await Filesystem.getUri({ directory: Directory.Cache, path: fileName })).uri;
       await Share.share({
         title: article.value.title,
-        text: article.value.prompt ? article.value.prompt.slice(0, 140) : 'Promptual artwork',
+        text: displayPrompt.value ? displayPrompt.value.slice(0, 140) : 'Promptual artwork',
         files: [uri],
       });
     } else if (navigator.share) {
       await navigator.share({
         title: article.value.title,
-        text: article.value.prompt ? article.value.prompt.slice(0, 140) : 'Promptual artwork',
+        text: displayPrompt.value ? displayPrompt.value.slice(0, 140) : 'Promptual artwork',
         url: article.value.imageUrl ?? article.value.path ?? window.location.href,
       });
     } else if (article.value.imageUrl) {
@@ -313,30 +328,14 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.detail-hero__overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 40px 20px 24px;
-  background: linear-gradient(
-    to top,
-    hsla(35, 24%, 4%, 0.86) 0%,
-    hsla(35, 24%, 4%, 0.38) 46%,
-    transparent 70%
-  );
-  pointer-events: none;
-}
-
 .detail-hero__title {
   font-family: Lora, georgia, serif;
   font-weight: 700;
-  font-size: clamp(1.7rem, 5vw, 2.8rem);
+  font-size: clamp(1.45rem, 4vw, 2.2rem);
   line-height: 1.2;
-  color: #fff;
+  color: var(--color--gray-5);
   margin: 0;
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.45);
+  flex-basis: 100%;
 }
 
 .detail-hero__bar {
@@ -368,7 +367,7 @@ onMounted(() => {
 
 .detail-hero__tag--nsfw {
   background: var(--color--red);
-  color: #fff;
+  color: var(--color--on-accent);
 }
 
 .detail-hero__date {
@@ -389,6 +388,8 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--color--gray-5);
@@ -407,7 +408,12 @@ onMounted(() => {
 
 .detail-hero__action--primary {
   background: var(--color--terracotta);
-  color: #fff;
+  color: var(--color--on-accent);
+}
+
+.detail-hero__action:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 3px;
 }
 
 .detail-hero__action--primary:hover {

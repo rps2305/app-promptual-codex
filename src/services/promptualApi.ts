@@ -19,6 +19,10 @@ const CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 const ARTICLE_PAGE_LIMIT = 30;
 const TAG_PAGE_LIMIT = 100;
 const MAX_ARTICLES = 2000;
+const ARTICLE_SORT = '-created,id';
+const DB_NAME = 'promptual-cache';
+const DB_VERSION = 1;
+const DB_STORE = 'responses';
 
 type RawArticle = Record<string, any>;
 type RawTag = Record<string, any>;
@@ -52,6 +56,15 @@ type CachePayload<T> = {
   data: T;
 };
 
+type JsonApiPage<T> = {
+  data?: T[];
+  links?: {
+    next?: {
+      href?: string;
+    };
+  };
+};
+
 const memoryStore = new Map<string, string>();
 
 const storage = {
@@ -70,13 +83,84 @@ const storage = {
   },
 };
 
+function canUseIndexedDb() {
+  return typeof indexedDB !== 'undefined';
+}
+
+function openCacheDb() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    if (!canUseIndexedDb()) {
+      reject(new Error('IndexedDB is not available.'));
+      return;
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('Could not open cache database.'));
+  });
+}
+
+async function readIndexedDb(key: string) {
+  if (!canUseIndexedDb()) {
+    return null;
+  }
+
+  try {
+    const db = await openCacheDb();
+    return await new Promise<string | null>((resolve, reject) => {
+      const transaction = db.transaction(DB_STORE, 'readonly');
+      const request = transaction.objectStore(DB_STORE).get(key);
+      request.onsuccess = () => resolve(typeof request.result === 'string' ? request.result : null);
+      request.onerror = () => reject(request.error ?? new Error('Could not read cache database.'));
+      transaction.oncomplete = () => db.close();
+      transaction.onerror = () => db.close();
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function writeIndexedDb(key: string, value: string) {
+  if (!canUseIndexedDb()) {
+    memoryStore.set(key, value);
+    return;
+  }
+
+  const db = await openCacheDb();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(DB_STORE, 'readwrite');
+    const request = transaction.objectStore(DB_STORE).put(value, key);
+    request.onerror = () => reject(request.error ?? new Error('Could not write cache database.'));
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error ?? new Error('Could not write cache database.'));
+    };
+  });
+}
+
 const cacheKey = {
-  articles: 'promptual:articles:v2',
+  articles: 'promptual:articles:v4',
   tags: 'promptual:tags:v2',
 };
 
-function readCache<T>(key: string): CachePayload<T> | null {
-  const raw = storage.getItem(key);
+async function readCache<T>(key: string): Promise<CachePayload<T> | null> {
+  let raw: string | null = null;
+  try {
+    raw = storage.getItem(key);
+  } catch {
+    raw = null;
+  }
+  raw = raw ?? await readIndexedDb(key);
   if (!raw) {
     return null;
   }
@@ -87,12 +171,24 @@ function readCache<T>(key: string): CachePayload<T> | null {
   }
 }
 
-function writeCache<T>(key: string, data: T) {
+async function writeCache<T>(key: string, data: T) {
   const payload: CachePayload<T> = {
     timestamp: Date.now(),
     data,
   };
-  storage.setItem(key, JSON.stringify(payload));
+  const serialized = JSON.stringify(payload);
+  try {
+    storage.setItem(key, serialized);
+  } catch {
+    await writeIndexedDb(key, serialized);
+  }
+}
+
+function toApiUrl(href: string) {
+  if (isRootDeployment && href.startsWith(`${DEFAULT_SITE_BASE}/jsonapi`)) {
+    return href.replace(`${DEFAULT_SITE_BASE}/jsonapi`, API_BASE);
+  }
+  return href;
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -167,20 +263,22 @@ export function normalizeArticle(article: RawArticle): PromptualArticle {
 
 async function loadAllArticles(): Promise<PromptualArticle[]> {
   const results: PromptualArticle[] = [];
-  let offset = 0;
+  const seenIds = new Set<string>();
+  let url: string | null = `${API_BASE}/node/article?include=field_image,field_tags,field_model&sort=${ARTICLE_SORT}&page[limit]=${ARTICLE_PAGE_LIMIT}&page[offset]=0`;
 
-  while (results.length < MAX_ARTICLES) {
-    const url = `${API_BASE}/node/article?include=field_image,field_tags,field_model&sort=-created&page[limit]=${ARTICLE_PAGE_LIMIT}&page[offset]=${offset}`;
-    const payload = await fetchJson<{ data?: RawArticle[] }>(url);
+  while (url && results.length < MAX_ARTICLES) {
+    const payload: JsonApiPage<RawArticle> = await fetchJson<JsonApiPage<RawArticle>>(url);
     const data = payload.data ?? [];
     if (!data.length) {
       break;
     }
-    results.push(...data.map(normalizeArticle));
-    if (data.length < ARTICLE_PAGE_LIMIT) {
-      break;
+    for (const article of data.map(normalizeArticle)) {
+      if (!seenIds.has(article.id)) {
+        seenIds.add(article.id);
+        results.push(article);
+      }
     }
-    offset += ARTICLE_PAGE_LIMIT;
+    url = payload.links?.next?.href ? toApiUrl(payload.links.next.href) : null;
   }
 
   return results;
@@ -188,39 +286,35 @@ async function loadAllArticles(): Promise<PromptualArticle[]> {
 
 async function loadAllTags(): Promise<PromptualTag[]> {
   const results: PromptualTag[] = [];
-  let offset = 0;
-  let hasMore = true;
+  let url: string | null = `${API_BASE}/taxonomy_term/tags?sort=name&page[limit]=${TAG_PAGE_LIMIT}&page[offset]=0`;
 
-  while (hasMore) {
-    const url = `${API_BASE}/taxonomy_term/tags?sort=name&page[limit]=${TAG_PAGE_LIMIT}&page[offset]=${offset}`;
-    const payload = await fetchJson<{ data?: RawTag[] }>(url);
+  while (url) {
+    const payload: JsonApiPage<RawTag> = await fetchJson<JsonApiPage<RawTag>>(url);
     const data = payload.data ?? [];
     if (!data.length) {
-      hasMore = false;
-      continue;
+      break;
     }
     results.push(...data.map(normalizeTag));
-    hasMore = data.length === TAG_PAGE_LIMIT;
-    offset += TAG_PAGE_LIMIT;
+    url = payload.links?.next?.href ? toApiUrl(payload.links.next.href) : null;
   }
 
   return results;
 }
 
-async function withCache<T>(key: string, loader: () => Promise<T>): Promise<T> {
-  const cached = readCache<T>(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+async function withCache<T>(key: string, loader: () => Promise<T>, force = false): Promise<T> {
+  const cached = await readCache<T>(key);
+  if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return cached.data;
   }
   const data = await loader();
-  writeCache(key, data);
+  await writeCache(key, data);
   return data;
 }
 
-export async function getArticles(): Promise<PromptualArticle[]> {
-  return withCache(cacheKey.articles, loadAllArticles);
+export async function getArticles(force = false): Promise<PromptualArticle[]> {
+  return withCache(cacheKey.articles, loadAllArticles, force);
 }
 
-export async function getTags(): Promise<PromptualTag[]> {
-  return withCache(cacheKey.tags, loadAllTags);
+export async function getTags(force = false): Promise<PromptualTag[]> {
+  return withCache(cacheKey.tags, loadAllTags, force);
 }

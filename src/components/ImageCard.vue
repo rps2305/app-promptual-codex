@@ -3,12 +3,26 @@
     class="gallery-item"
     :class="{ 'gallery-item--compact': compact, 'gallery-item--expanded': expanded }"
   >
-    <div class="gallery-item__frame" @click="goToDetail">
-      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" @click="goToDetail" />
-      <div v-else class="gallery-item__placeholder" @click="goToDetail">Image unavailable</div>
+    <router-link
+      v-if="linked"
+      :to="detailPath"
+      class="gallery-item__frame gallery-item__frame-link"
+      :aria-label="`Open ${article.title}`"
+    >
+      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" />
+      <div v-else class="gallery-item__placeholder">Image unavailable</div>
+    </router-link>
+    <div v-else class="gallery-item__frame">
+      <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" loading="lazy" />
+      <div v-else class="gallery-item__placeholder">Image unavailable</div>
     </div>
     <figcaption class="gallery-item__caption">
-      <h3 class="gallery-item__title" @click="goToDetail">{{ article.title }}</h3>
+      <h3 class="gallery-item__title">
+        <router-link v-if="linked" :to="detailPath" class="gallery-item__title-link">
+          {{ article.title }}
+        </router-link>
+        <span v-else>{{ article.title }}</span>
+      </h3>
       <p v-if="promptSnippet && !compact" class="gallery-item__prompt" @click.stop="$emit('select')">{{ promptSnippet }}</p>
       <div v-if="!compact && !expanded && article.tags.length" class="gallery-item__tags-row">
         <span v-if="article.nsfw" class="gallery-item__tag gallery-item__tag--nsfw">NSFW</span>
@@ -49,7 +63,7 @@
         <span v-for="tag in article.tags" :key="tag.id" class="gallery-item__tag gallery-item__tag--expanded">{{ tag.name }}</span>
       </div>
       <router-link
-        :to="`/tabs/tab1/${article.id}`"
+        :to="detailPath"
         class="gallery-item__detail-link"
         @click.stop
       >
@@ -61,24 +75,20 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import type { PromptualArticle } from '@/services/promptualApi';
 
 const props = defineProps<{
   article: PromptualArticle;
   compact?: boolean;
   expanded?: boolean;
+  linked?: boolean;
 }>();
 
 defineEmits<{
   select: [];
 }>();
 
-const router = useRouter();
-
-function goToDetail() {
-  router.push(`/tabs/tab1/${props.article.id}`);
-}
+const detailPath = computed(() => `/tabs/tab1/${props.article.id}`);
 
 const promptSnippet = computed(() => {
   const prompt = String(props.article.prompt ?? '').trim();
@@ -97,6 +107,7 @@ const promptSnippet = computed(() => {
 }
 
 .gallery-item__frame {
+  display: block;
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
@@ -106,16 +117,17 @@ const promptSnippet = computed(() => {
   cursor: pointer;
   touch-action: manipulation;
   transition: box-shadow 0.3s var(--ease-out-quart), transform 0.3s var(--ease-out-quart);
+  text-decoration: none;
   box-shadow:
     0 3px 0 var(--color--gray-20),
-    0 12px 28px rgba(18, 14, 8, 0.18);
+    0 12px 28px var(--shadow--soft);
 }
 
 .gallery-item__frame::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--color--image-inset);
   pointer-events: none;
 }
 
@@ -123,8 +135,15 @@ const promptSnippet = computed(() => {
   .gallery-item:hover .gallery-item__frame {
     box-shadow:
       0 4px 0 var(--color--gray-20),
-      0 18px 36px rgba(18, 14, 8, 0.24);
+      0 18px 36px var(--shadow--strong);
   }
+}
+
+.gallery-item__frame-link:focus-visible,
+.gallery-item__title-link:focus-visible,
+.gallery-item__detail-link:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 4px;
 }
 
 .gallery-item--compact .gallery-item__frame {
@@ -137,7 +156,6 @@ const promptSnippet = computed(() => {
   height: 100%;
   object-fit: cover;
   transition: opacity 0.3s ease;
-  cursor: pointer;
 }
 
 .gallery-item__placeholder {
@@ -164,7 +182,15 @@ const promptSnippet = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
+}
+
+.gallery-item__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.gallery-item__title-link:hover {
+  color: var(--color--terracotta);
 }
 
 .gallery-item--compact .gallery-item__title {
@@ -219,7 +245,7 @@ const promptSnippet = computed(() => {
 
 .gallery-item__tag--nsfw {
   background: var(--color--red);
-  color: #fff;
+  color: var(--color--on-accent);
 }
 
 /* Expanded state */

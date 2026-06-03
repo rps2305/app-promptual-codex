@@ -26,6 +26,7 @@
           :value="query"
           :debounce="300"
           placeholder="Search by title, prompt, or tag…"
+          aria-label="Search images by title, prompt, or tag"
           @ionInput="onSearchInput"
           @ionChange="onSearchInput"
           @ionClear="onSearchClear"
@@ -40,15 +41,17 @@
           </ion-button>
         </div>
         <div class="tag-list">
-          <ion-chip
+          <button
             v-for="tag in tagOptions"
             :key="tag.id"
-            :outline="!isSelected(tag.id)"
-            color="primary"
+            type="button"
+            class="tag-filter"
+            :class="{ 'tag-filter--selected': isSelected(tag.id) }"
+            :aria-pressed="isSelected(tag.id)"
             @click="toggleTag(tag.id)"
           >
-            <ion-label>{{ tag.name }}</ion-label>
-          </ion-chip>
+            {{ tag.name }}
+          </button>
           <ion-button
             v-if="!showAllTags && tags.length > tagOptions.length"
             size="small"
@@ -154,7 +157,6 @@ import {
   IonButton,
   IonContent,
   IonSearchbar,
-  IonChip,
   IonGrid,
   IonRow,
   IonCol,
@@ -337,6 +339,31 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
+}
+
+.tag-filter {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--color--gray-85);
+  border-radius: 999px;
+  color: var(--color--gray-20);
+  background: var(--color--gray-100);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tag-filter--selected {
+  border-color: var(--color--primary-50);
+  color: var(--color--on-accent);
+  background: var(--color--primary-50);
+}
+
+.tag-filter:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 3px;
 }
 
 .tags-search {

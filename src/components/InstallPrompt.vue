@@ -1,7 +1,9 @@
 <template>
   <div v-if="visible" class="install-prompt">
     <div class="install-prompt__body">
-      <button class="install-prompt__close" @click="dismiss" aria-label="Dismiss">&times;</button>
+      <button class="install-prompt__close" @click="dismiss" aria-label="Dismiss">
+        <span aria-hidden="true">&times;</span>
+      </button>
       <div class="install-prompt__icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3v12m0 0-3-3m3 3 3-3" />
@@ -67,7 +69,7 @@ onMounted(() => {
   padding: 16px 16px 12px;
   background: linear-gradient(180deg, var(--color--gray-100) 0%, var(--color--gray-95) 100%);
   border-bottom: 1px solid var(--color--gray-90);
-  box-shadow: 0 4px 16px rgba(18, 14, 8, 0.1);
+  box-shadow: 0 4px 16px var(--shadow--install-prompt);
   animation: slideDown 0.35s var(--ease-out-expo) both;
 }
 
@@ -82,8 +84,8 @@ onMounted(() => {
   position: absolute;
   top: 6px;
   right: 8px;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border: none;
   background: transparent;
   font-size: 1.4rem;
@@ -98,6 +100,11 @@ onMounted(() => {
 .install-prompt__close:hover {
   background: var(--color--gray-90);
   color: var(--color--gray-5);
+}
+
+.install-prompt__close:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 2px;
 }
 
 .install-prompt__icon {
