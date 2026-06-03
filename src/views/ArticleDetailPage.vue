@@ -95,7 +95,15 @@
             <dd>{{ article.seed ?? 'Unknown' }}</dd>
           </div>
         </dl>
-        <ion-button v-if="article.path" size="small" fill="outline" :href="article.path" target="_blank" rel="noopener">
+        <ion-button
+          v-if="article.path"
+          class="detail-original-link"
+          size="small"
+          fill="outline"
+          :href="article.path"
+          target="_blank"
+          rel="noopener"
+        >
           View original post
         </ion-button>
       </section>
@@ -501,6 +509,15 @@ onMounted(() => {
   text-align: right;
   font-family: Lora, georgia, serif;
   word-break: break-all;
+}
+
+.detail-original-link {
+  --border-color: var(--color--terracotta);
+  --color: var(--color--terracotta);
+  --color-hover: var(--color--terracotta-light);
+  --background-hover: var(--color--gray-95);
+  --ripple-color: var(--color--terracotta-light);
+  font-weight: 700;
 }
 
 .detail-loading {

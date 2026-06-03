@@ -50,15 +50,12 @@
         </ion-button>
       </section>
 
-      <ion-grid v-if="loading && !articles.length">
-        <ion-row>
-          <ion-col
-            v-for="index in 6"
-            :key="`skeleton-${index}`"
-            size="12"
-            size-md="6"
-            size-lg="4"
-          >
+      <div v-if="loading && !articles.length" class="gallery-grid">
+        <div
+          v-for="index in 6"
+          :key="`skeleton-${index}`"
+          class="gallery-grid__item"
+        >
             <div class="skeleton-item">
               <div class="skeleton-item__frame">
                 <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
@@ -68,35 +65,22 @@
                 <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
               </div>
             </div>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+        </div>
+      </div>
 
-      <ion-grid v-else>
-        <ion-row>
-          <ion-col
-            v-for="(article, index) in visibleArticles"
+      <div class="gallery-grid">
+          <div
+            v-for="(article, index) in filteredArticles.slice(0, effectiveVisibleCount)"
             :key="article.id"
-            size="12"
-            size-md="6"
-            size-lg="4"
             :style="{ '--card-index': index }"
-            class="gallery-col"
+            class="gallery-grid__item gallery-col"
           >
-            <div
-              class="gallery-card"
-              :class="{ 'gallery-card--expanded': expandedId === article.id }"
-            >
-              <ImageCard
-                :article="article"
-                :expanded="expandedId === article.id"
-                linked
-                @select="toggleExpand(article.id)"
-              />
-            </div>
-          </ion-col>
+            <router-link :to="`/tabs/tab1/${article.id}`" class="gallery-card-link">
+              <ImageCard :article="article" compact />
+            </router-link>
+          </div>
 
-          <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
+          <div v-if="!loading && filteredArticles.length === 0" class="gallery-grid__empty">
             <div class="empty-state">
               <ion-icon :icon="imageOutline" class="empty-icon" />
               <ion-text color="medium">
@@ -104,9 +88,8 @@
                 <p class="empty-hint">Try a shorter word, a different tag, or flip the NSFW filter — there's weird and wonderful stuff in there.</p>
               </ion-text>
             </div>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+          </div>
+      </div>
 
       <ion-infinite-scroll v-if="canLoadMore" @ionInfinite="onInfinite">
         <ion-infinite-scroll-content loading-text="Loading more…" />
@@ -127,9 +110,6 @@ import {
   IonButton,
   IonContent,
   IonSearchbar,
-  IonGrid,
-  IonRow,
-  IonCol,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonSkeletonText,
@@ -150,15 +130,10 @@ import { usePromptualData } from '@/composables/usePromptualData';
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
 const visibleCount = ref(12);
 const query = ref('');
-const expandedId = ref<string | null>(null);
 const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
 
 function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
   localStorage.setItem('promptual:nsfwFilter', value);
-}
-
-function toggleExpand(id: string) {
-  expandedId.value = expandedId.value === id ? null : id;
 }
 
 const filteredArticles = computed(() => {
@@ -183,8 +158,8 @@ const filteredArticles = computed(() => {
   });
 });
 
-const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
-const canLoadMore = computed(() => visibleCount.value < filteredArticles.value.length);
+const effectiveVisibleCount = computed(() => Math.max(visibleCount.value, 12));
+const canLoadMore = computed(() => effectiveVisibleCount.value < filteredArticles.value.length);
 
 function onNsfwChange(event: CustomEvent) {
   const value = event.detail.value as 'show' | 'hide' | 'only';
@@ -217,7 +192,9 @@ async function onRefresh(event: CustomEvent) {
 }
 
 watch(articles, () => {
-  visibleCount.value = Math.min(visibleCount.value, articles.value.length || 12);
+  visibleCount.value = articles.value.length
+    ? Math.max(1, Math.min(visibleCount.value || 12, articles.value.length))
+    : 12;
 });
 
 onMounted(() => {
@@ -246,20 +223,48 @@ onMounted(() => {
   padding: 0;
 }
 
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 10px 16px;
+}
+
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.gallery-grid__item {
+  min-width: 0;
+}
+
+.gallery-grid__empty {
+  grid-column: 1 / -1;
+}
+
 .gallery-col {
   animation: card-enter 0.4s ease-out both;
   animation-delay: calc(var(--card-index, 0) * 50ms);
 }
 
-.gallery-card {
-  cursor: pointer;
+.gallery-card-link {
+  display: block;
   height: 100%;
-  transition: box-shadow 0.2s ease;
+  color: inherit;
+  text-decoration: none;
 }
 
-.gallery-card--expanded {
-  border-bottom: 2px solid var(--color--terracotta-light);
-  padding-bottom: 12px;
+.gallery-card-link:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 4px;
 }
 
 .skeleton-item {

@@ -4,7 +4,13 @@ import { describe, expect, test } from 'vitest'
 
 describe('Tab1Page.vue', () => {
   test('renders gallery header copy', () => {
-    const wrapper = mount(Tab1Page)
+    const wrapper = mount(Tab1Page, {
+      global: {
+        stubs: {
+          RouterLink: true,
+        },
+      },
+    })
     expect(wrapper.text()).toMatch('Promptual Gallery')
   })
 })
