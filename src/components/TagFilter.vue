@@ -1,8 +1,8 @@
 <template>
   <div class="tag-filter">
     <div class="tag-filter__header">
-      <h3 class="tag-filter__title">Filter by tags</h3>
-      <ion-button v-if="selectedTags.length > 0" fill="clear" size="small" @click="clearAll">
+      <h3 class="tag-filter__title">Filters</h3>
+      <ion-button v-if="hasActiveFilters" fill="clear" size="small" @click="clearAll">
         Clear filters
       </ion-button>
     </div>
@@ -21,7 +21,7 @@
       </ion-segment>
     </div>
 
-    <div class="tag-filter__chips">
+    <div v-if="tags.length > 0" class="tag-filter__chips">
       <ion-chip
         v-for="tag in tags"
         :key="tag.id"
@@ -60,6 +60,10 @@ const emit = defineEmits<{
 
 const selectedTags = computed(() => {
   return props.tags.filter(tag => props.selectedTagIds.includes(tag.id));
+});
+
+const hasActiveFilters = computed(() => {
+  return selectedTags.value.length > 0 || props.nsfwFilter !== 'all';
 });
 
 function isSelected(tagId: string): boolean {
@@ -113,6 +117,17 @@ function clearAll() {
 
 .tag-filter__safety ion-segment {
   width: min(100%, 360px);
+  --background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.tag-filter__safety :deep(ion-segment-button) {
+  min-height: 44px;
+  --indicator-color: var(--ion-color-primary);
+  --color: var(--color--gray-20);
+  --color-checked: var(--color--on-accent);
+  font-weight: 700;
 }
 
 .tag-filter :deep(ion-chip) {

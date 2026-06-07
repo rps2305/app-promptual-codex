@@ -147,9 +147,14 @@ ion-title {
 }
 
 .title-logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--color--gold);
+  border: 1px solid color-mix(in srgb, var(--color--gray-5) 18%, transparent);
+  box-shadow: 0 1px 3px rgba(18, 24, 31, 0.16);
+  box-sizing: border-box;
   object-fit: cover;
 }
 

@@ -43,7 +43,6 @@
 
       <div class="section-pad">
         <TagFilter
-          v-if="articlesStore.articles.length > 0"
           :tags="getAllTags()"
           :selected-tag-ids="uiStore.selectedTagIds"
           :nsfw-filter="uiStore.nsfwFilter"
@@ -340,7 +339,7 @@ onMounted(async () => {
 
 .title-logo {
   height: 32px;
-  width: auto;
+  width: 32px;
 }
 
 .card-link {

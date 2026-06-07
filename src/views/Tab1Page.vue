@@ -127,6 +127,6 @@ onMounted(async () => {
 
 .title-logo {
   height: 32px;
-  width: auto;
+  width: 32px;
 }
 </style>
