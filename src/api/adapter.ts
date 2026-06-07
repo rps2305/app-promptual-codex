@@ -6,10 +6,14 @@ interface RetryOptions {
   maxDelay?: number;
 }
 
-const DEFAULT_API_BASE_URL = '/jsonapi/';
+const DEFAULT_API_BASE_URL = 'https://promptual.puntuale.nl/jsonapi/';
+const DEFAULT_SITE_BASE_URL = 'https://promptual.puntuale.nl';
 
 function joinUrl(baseUrl: string | undefined, path: string): string {
-  const resolvedBase = baseUrl || DEFAULT_API_BASE_URL;
+  const configuredBase = baseUrl || DEFAULT_API_BASE_URL;
+  const resolvedBase = !import.meta.env.DEV && configuredBase.startsWith('/')
+    ? `${(import.meta.env.VITE_SITE_BASE_URL || DEFAULT_SITE_BASE_URL).replace(/\/+$/, '')}${configuredBase}`
+    : configuredBase;
 
   if (/^https?:\/\//i.test(path)) {
     return path;

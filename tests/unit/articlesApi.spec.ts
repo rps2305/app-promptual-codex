@@ -39,6 +39,7 @@ describe('articles API pagination', () => {
   });
 
   it('joins API base urls without dropping the jsonapi slash', () => {
+    expect(joinUrl(undefined, 'node/article')).toBe('https://promptual.puntuale.nl/jsonapi/node/article');
     expect(joinUrl('/jsonapi', 'node/article')).toBe('/jsonapi/node/article');
     expect(joinUrl('/jsonapi/', '/node/article')).toBe('/jsonapi/node/article');
     expect(joinUrl('https://promptual.puntuale.nl/jsonapi/', 'node/article')).toBe(
