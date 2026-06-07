@@ -34,6 +34,14 @@ import '@ionic/vue/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch(() => {
+      /* Ignore development-only cache cleanup failures. */
+    });
+}
+
 const app = createApp(App)
   .use(IonicVue)
   .use(router);

@@ -4,15 +4,10 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             Promptual Gallery
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,59 +16,86 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">
-            <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
-              Promptual Gallery
-            </span>
-          </ion-title>
+          <ion-title size="large">Promptual Gallery</ion-title>
         </ion-toolbar>
       </ion-header>
 
       <section class="page-section">
-        <p class="page-kicker">AI-generated imagery from Promptual.</p>
+        <p class="page-kicker">{{ filteredArticles.length }} images</p>
+        <ion-searchbar
+          :value="query"
+          :debounce="300"
+          show-clear-button="always"
+          placeholder="Search by title, prompt, or tag…"
+          aria-label="Search images by title, prompt, or tag"
+          @ionInput="onSearchInput"
+          @ionChange="onSearchInput"
+          @ionClear="onSearchClear"
+          class="gallery-search"
+        ></ion-searchbar>
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Safe</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
+        <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
+          Try again
+        </ion-button>
       </section>
 
-      <ion-grid>
-        <ion-row>
-          <ion-col
-            v-for="article in visibleArticles"
-            :key="article.id"
-            size="12"
-            size-md="6"
-            size-lg="4"
-          >
-            <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" :show-prompt="false" />
-            </router-link>
-          </ion-col>
+      <div v-if="loading && !articles.length" class="gallery-grid">
+        <div
+          v-for="index in 6"
+          :key="`skeleton-${index}`"
+          class="gallery-grid__item"
+        >
+            <div class="skeleton-item">
+              <div class="skeleton-item__frame">
+                <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+              </div>
+              <div class="skeleton-item__caption">
+                <ion-skeleton-text animated style="width: 70%; height: 14px; display: block" />
+                <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
+              </div>
+            </div>
+        </div>
+      </div>
 
-          <template v-if="loading && !articles.length">
-            <ion-col
-              v-for="index in 6"
-              :key="`skeleton-${index}`"
-              size="12"
-              size-md="6"
-              size-lg="4"
-            >
-              <ion-card class="image-card">
-                <ion-skeleton-text animated style="height: 220px" />
-                <ion-card-header>
-                  <ion-skeleton-text animated style="width: 80%" />
-                  <ion-skeleton-text animated style="width: 60%" />
-                </ion-card-header>
-              </ion-card>
-            </ion-col>
-          </template>
-        </ion-row>
-      </ion-grid>
+      <div class="gallery-grid">
+          <div
+            v-for="(article, index) in filteredArticles.slice(0, effectiveVisibleCount)"
+            :key="article.id"
+            :style="{ '--card-index': index }"
+            class="gallery-grid__item gallery-col"
+          >
+            <router-link :to="`/tabs/tab1/${article.id}`" class="gallery-card-link">
+              <ImageCard :article="article" compact />
+            </router-link>
+          </div>
+
+          <div v-if="!loading && filteredArticles.length === 0" class="gallery-grid__empty">
+            <div class="empty-state">
+              <ion-icon :icon="imageOutline" class="empty-icon" />
+              <ion-text color="medium">
+                <p class="empty-text">Nothing matched</p>
+                <p class="empty-hint">Try a shorter word, a different tag, or flip the NSFW filter — there's weird and wonderful stuff in there.</p>
+              </ion-text>
+            </div>
+          </div>
+      </div>
 
       <ion-infinite-scroll v-if="canLoadMore" @ionInfinite="onInfinite">
-        <ion-infinite-scroll-content loading-text="Loading more art..." />
+        <ion-infinite-scroll-content loading-text="Loading more…" />
       </ion-infinite-scroll>
 
-      <ion-loading :is-open="loading" message="Loading gallery..." />
+      <ion-loading :is-open="loading" message="Loading images…" />
     </ion-content>
   </ion-page>
 </template>
@@ -85,36 +107,80 @@ import {
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButtons,
   IonButton,
-  IonIcon,
   IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
+  IonSearchbar,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonCard,
-  IonCardHeader,
   IonSkeletonText,
   IonText,
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel,
+  IonIcon,
 } from '@ionic/vue';
-import { RouterLink, useRouter } from 'vue-router';
-import { searchOutline } from 'ionicons/icons';
+import { imageOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
 
 const { articles, loading, error, loadAll, forceReload } = usePromptualData();
-const router = useRouter();
 const visibleCount = ref(12);
-const visibleArticles = computed(() => articles.value.slice(0, visibleCount.value));
-const canLoadMore = computed(() => visibleCount.value < articles.value.length);
+const query = ref('');
+const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+
+function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
+  localStorage.setItem('promptual:nsfwFilter', value);
+}
+
+const filteredArticles = computed(() => {
+  const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
+  const nsfwMode = nsfwFilter.value;
+
+  return articles.value.filter((article) => {
+    const matchesNsfw = nsfwMode === 'show'
+      ? true
+      : nsfwMode === 'hide'
+        ? !article.nsfw
+        : article.nsfw;
+
+    const tagNames = article.tags.map((tag) => tag.name.toLowerCase());
+    const matchesQuery = !normalizedQuery
+      ? true
+      : article.title.toLowerCase().includes(normalizedQuery) ||
+        article.prompt.toLowerCase().includes(normalizedQuery) ||
+        tagNames.some((name) => name.includes(normalizedQuery));
+
+    return matchesNsfw && matchesQuery;
+  });
+});
+
+const effectiveVisibleCount = computed(() => Math.max(visibleCount.value, 12));
+const canLoadMore = computed(() => effectiveVisibleCount.value < filteredArticles.value.length);
+
+function onNsfwChange(event: CustomEvent) {
+  const value = event.detail.value as 'show' | 'hide' | 'only';
+  nsfwFilter.value = value;
+  saveNsfwFilter(value);
+  visibleCount.value = 12;
+}
+
+function onSearchInput(event: CustomEvent) {
+  const detail = event.detail as { value?: string | null };
+  query.value = detail?.value ?? '';
+  visibleCount.value = 12;
+}
+
+function onSearchClear() {
+  query.value = '';
+  visibleCount.value = 12;
+}
 
 function onInfinite(event: CustomEvent) {
-  visibleCount.value = Math.min(visibleCount.value + 12, articles.value.length);
+  visibleCount.value = Math.min(visibleCount.value + 12, filteredArticles.value.length);
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
@@ -125,12 +191,10 @@ async function onRefresh(event: CustomEvent) {
   target.complete?.();
 }
 
-function goToTags() {
-  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
-}
-
 watch(articles, () => {
-  visibleCount.value = Math.min(visibleCount.value, articles.value.length || 12);
+  visibleCount.value = articles.value.length
+    ? Math.max(1, Math.min(visibleCount.value || 12, articles.value.length))
+    : 12;
 });
 
 onMounted(() => {
@@ -140,27 +204,112 @@ onMounted(() => {
 
 <style scoped>
 .page-section {
-  padding: 20px 20px 10px;
+  padding: 24px 20px 10px;
 }
 
 .page-kicker {
-  margin: 0 0 8px;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  margin: 0 0 4px;
+  font-family: Lora, georgia, serif;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color--gray-45, #6b7280);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  color: var(--color--gray-5);
 }
 
-.card-link {
-  text-decoration: none;
+.gallery-search {
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 10px 16px;
+}
+
+@media (min-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.gallery-grid__item {
+  min-width: 0;
+}
+
+.gallery-grid__empty {
+  grid-column: 1 / -1;
+}
+
+.gallery-col {
+  animation: card-enter 0.4s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 50ms);
+}
+
+.gallery-card-link {
   display: block;
   height: 100%;
+  color: inherit;
+  text-decoration: none;
 }
 
+.gallery-card-link:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 4px;
+}
 
-.tag-list :deep(ion-chip) {
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-item__frame {
+  aspect-ratio: 4 / 5;
+  background: var(--color--gray-90);
+  border: 2px solid var(--color--gray-20);
+}
+
+.skeleton-item__caption {
+  padding: 8px 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  opacity: 0.55;
+  color: var(--color--gray-45);
+}
+
+.empty-text {
+  font-size: 1.125rem;
   font-weight: 700;
-  font-size: 0.85rem;
+  margin: 0 0 8px;
 }
+
+.empty-hint {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.7;
+  max-width: 320px;
+}
+
 </style>

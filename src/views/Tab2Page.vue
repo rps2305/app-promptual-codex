@@ -4,15 +4,10 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <AppLogo />
             Tags
           </span>
         </ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="toggleSearch">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -21,146 +16,214 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">
-            <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
-              Tags
-            </span>
-          </ion-title>
+          <ion-title size="large">Tags</ion-title>
         </ion-toolbar>
       </ion-header>
 
       <section class="page-section">
-        <p class="page-kicker">Search by title, prompt, or tag.</p>
+        <p class="page-kicker">{{ filteredArticles.length }} results</p>
         <ion-searchbar
-          v-if="showSearch"
           :value="query"
           :debounce="300"
-          placeholder="Try “portrait”, “flux”, “forest”…"
+          placeholder="Search by title, prompt, or tag…"
+          aria-label="Search images by title, prompt, or tag"
           @ionInput="onSearchInput"
           @ionChange="onSearchInput"
           @ionClear="onSearchClear"
+          class="tags-search"
         ></ion-searchbar>
       </section>
 
       <section class="tag-section" v-if="tags.length">
         <div class="tag-header">
-          <ion-text class="tag-label">Filter by tag</ion-text>
           <ion-button v-if="selectedTags.length" size="small" fill="clear" @click="clearTags">
             Clear
           </ion-button>
         </div>
         <div class="tag-list">
-          <ion-chip
+          <button
             v-for="tag in tagOptions"
             :key="tag.id"
-            :outline="!isSelected(tag.id)"
-            color="primary"
+            type="button"
+            class="tag-filter"
+            :class="{ 'tag-filter--selected': isSelected(tag.id) }"
+            :aria-pressed="isSelected(tag.id)"
             @click="toggleTag(tag.id)"
           >
-            <ion-label>{{ tag.name }}</ion-label>
-          </ion-chip>
+            {{ tag.name }}
+          </button>
           <ion-button
-            v-if="tags.length > tagOptions.length"
+            v-if="!showAllTags && tags.length > tagOptions.length"
             size="small"
             fill="clear"
             @click="showAllTags = true"
           >
             Show all
           </ion-button>
+          <ion-button
+            v-if="showAllTags"
+            size="small"
+            fill="clear"
+            @click="showAllTags = false"
+          >
+            Show less
+          </ion-button>
         </div>
       </section>
 
       <section class="page-section">
-        <ion-text class="result-count">{{ filteredArticles.length }} results</ion-text>
+        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
+          <ion-segment-button value="show" title="Display all images regardless of content rating">
+            <ion-label>All</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
+            <ion-label>Safe</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
+            <ion-label>NSFW</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </section>
+
+      <section class="page-section">
         <ion-text v-if="error" color="danger">{{ error }}</ion-text>
+        <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
+          Try again
+        </ion-button>
       </section>
 
       <ion-grid>
         <ion-row>
           <ion-col
-            v-for="article in filteredArticles"
+            v-for="(article, index) in visibleArticles"
             :key="article.id"
             size="12"
             size-md="6"
-            size-lg="4"
+            size-lg="3"
+            :style="{ '--card-index': index }"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" :show-prompt="false" />
+              <ImageCard :article="article" compact />
             </router-link>
           </ion-col>
 
           <template v-if="loading && !articles.length">
             <ion-col
-              v-for="index in 6"
+              v-for="index in 8"
               :key="`skeleton-${index}`"
               size="12"
               size-md="6"
-              size-lg="4"
+              size-lg="3"
             >
-              <ion-card class="image-card">
-                <ion-skeleton-text animated style="height: 220px" />
-                <ion-card-header>
-                  <ion-skeleton-text animated style="width: 80%" />
-                  <ion-skeleton-text animated style="width: 60%" />
-                </ion-card-header>
-              </ion-card>
+              <div class="skeleton-item">
+                <div class="skeleton-item__frame skeleton-item__frame--compact">
+                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
+                </div>
+                <div class="skeleton-item__caption">
+                  <ion-skeleton-text animated style="width: 60%; height: 12px; display: block" />
+                </div>
+              </div>
             </ion-col>
           </template>
+
+          <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
+            <div class="empty-state">
+              <ion-icon :icon="searchOutline" class="empty-icon" />
+              <ion-text color="medium">
+                <p class="empty-text">Nothing matched</p>
+                <p class="empty-hint">Try a broader search, pick a different tag, or loosen the NSFW filter — there's plenty more to explore.</p>
+              </ion-text>
+            </div>
+          </ion-col>
         </ion-row>
       </ion-grid>
 
-      <ion-loading :is-open="loading" message="Loading search..." />
+      <ion-infinite-scroll :disabled="visibleCount >= filteredArticles.length" @ionInfinite="onInfinite">
+        <ion-infinite-scroll-content loading-spinner="crescent" />
+      </ion-infinite-scroll>
+
+      <ion-loading :is-open="loading" message="Searching images…" />
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButtons,
   IonButton,
-  IonIcon,
   IonContent,
   IonSearchbar,
-  IonChip,
   IonGrid,
   IonRow,
   IonCol,
-  IonCard,
-  IonCardHeader,
+
   IonSkeletonText,
   IonText,
   IonLabel,
   IonRefresher,
   IonRefresherContent,
   IonLoading,
+  IonSegment,
+  IonSegmentButton,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
+  IonIcon,
 } from '@ionic/vue';
 import { searchOutline } from 'ionicons/icons';
 import ImageCard from '@/components/ImageCard.vue';
+import AppLogo from '@/components/AppLogo.vue';
 import { usePromptualData } from '@/composables/usePromptualData';
-import { useRoute } from 'vue-router';
+import type { PromptualTag } from '@/services/promptualApi';
 
 const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
 const query = ref('');
 const selectedTags = ref<string[]>([]);
 const showAllTags = ref(false);
-const showSearch = ref(false);
+const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+
+function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
+  localStorage.setItem('promptual:nsfwFilter', value);
+}
 const TAG_PREVIEW_LIMIT = 24;
-const route = useRoute();
+
+const usedTagIds = computed(() => {
+  const ids = new Set<string>();
+  for (const article of articles.value) {
+    for (const tag of article.tags) {
+      ids.add(tag.id);
+    }
+  }
+  return ids;
+});
+
+const usedModels = computed(() => {
+  const map = new Map<string, PromptualTag>();
+  for (const article of articles.value) {
+    if (article.model && !map.has(article.model.id)) {
+      map.set(article.model.id, article.model);
+    }
+  }
+  return [...map.values()];
+});
 
 const tagOptions = computed(() => {
-  const sorted = [...tags.value].sort((a, b) => a.name.localeCompare(b.name));
+  const allTags = [...tags.value, ...usedModels.value]
+    .filter((tag) => usedTagIds.value.has(tag.id));
+  const unique = allTags.filter(
+    (tag, index, self) => self.findIndex((t) => t.id === tag.id) === index
+  );
+  const sorted = unique.sort((a, b) => a.name.localeCompare(b.name));
   return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
 });
 
 const filteredArticles = computed(() => {
   const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
   const hasTagFilter = selectedTags.value.length > 0;
+  const nsfwMode = nsfwFilter.value;
 
   return articles.value.filter((article) => {
     const tagNames = article.tags.map((tag) => tag.name.toLowerCase());
@@ -174,8 +237,38 @@ const filteredArticles = computed(() => {
         article.prompt.toLowerCase().includes(normalizedQuery) ||
         tagNames.some((name) => name.includes(normalizedQuery));
 
-    return matchesTagFilter && matchesQuery;
+    const matchesNsfw = nsfwMode === 'show'
+      ? true
+      : nsfwMode === 'hide'
+        ? !article.nsfw
+        : article.nsfw;
+
+    return matchesTagFilter && matchesQuery && matchesNsfw;
   });
+});
+
+const PAGE_SIZE = 24;
+const visibleCount = ref(PAGE_SIZE);
+const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
+
+function onNsfwChange(event: CustomEvent) {
+  const value = event.detail.value as 'show' | 'hide' | 'only';
+  nsfwFilter.value = value;
+  saveNsfwFilter(value);
+}
+
+function onInfinite(event: CustomEvent) {
+  visibleCount.value = Math.min(visibleCount.value + PAGE_SIZE, filteredArticles.value.length);
+  const target = event.target as { complete?: () => void };
+  target.complete?.();
+}
+
+watch([query, selectedTags, nsfwFilter], () => {
+  visibleCount.value = PAGE_SIZE;
+});
+
+watch(articles, () => {
+  visibleCount.value = Math.min(visibleCount.value, articles.value.length || PAGE_SIZE);
 });
 
 function toggleTag(tagId: string) {
@@ -203,10 +296,6 @@ function onSearchClear() {
   query.value = '';
 }
 
-function toggleSearch() {
-  showSearch.value = !showSearch.value;
-}
-
 async function onRefresh(event: CustomEvent) {
   await forceReload();
   const target = event.target as { complete?: () => void };
@@ -214,42 +303,34 @@ async function onRefresh(event: CustomEvent) {
 }
 
 onMounted(() => {
-  if (route.query.focus === 'search') {
-    showSearch.value = true;
-  }
   loadAll();
 });
 </script>
 
 <style scoped>
 .page-section {
-  padding: 20px 20px 10px;
+  padding: 24px 20px 10px;
 }
 
 .page-kicker {
-  margin: 0 0 8px;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  margin: 0 0 4px;
+  font-family: Lora, georgia, serif;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color--gray-45, #6b7280);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  color: var(--color--gray-5);
 }
 
 .tag-section {
   padding: 0 20px 12px;
 }
 
-.tag-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color--gray-45, #6b7280);
-}
-
 .tag-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -260,15 +341,90 @@ onMounted(() => {
   margin-top: 8px;
 }
 
-.result-count {
-  display: block;
-  font-size: 0.875rem;
-  color: var(--color--gray-45, #6b7280);
+.tag-filter {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--color--gray-85);
+  border-radius: 999px;
+  color: var(--color--gray-20);
+  background: var(--color--gray-100);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tag-filter--selected {
+  border-color: var(--color--primary-50);
+  color: var(--color--on-accent);
+  background: var(--color--primary-50);
+}
+
+.tag-filter:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: 3px;
+}
+
+.tags-search {
+  margin-bottom: 12px;
+  padding: 0;
 }
 
 .card-link {
   text-decoration: none;
   display: block;
   height: 100%;
+  animation: card-enter 0.4s ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 40ms);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  opacity: 0.55;
+  color: var(--color--gray-45);
+}
+
+.empty-text {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.7;
+  max-width: 320px;
+}
+
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-item__frame--compact {
+  aspect-ratio: 3 / 4;
+}
+
+.skeleton-item__frame {
+  aspect-ratio: 4 / 5;
+  background: var(--color--gray-90);
+  border: 2px solid var(--color--gray-20);
+}
+
+.skeleton-item__caption {
+  padding: 8px 0 0;
+  display: grid;
+  gap: 6px;
 }
 </style>

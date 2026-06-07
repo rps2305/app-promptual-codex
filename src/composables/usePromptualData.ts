@@ -7,19 +7,19 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 let hasLoaded = false;
 
-async function loadAll() {
-  if (hasLoaded) {
+async function loadAll(force = false) {
+  if (hasLoaded || loading.value) {
     return;
   }
   loading.value = true;
   error.value = null;
   try {
-    const [articleData, tagData] = await Promise.all([getArticles(), getTags()]);
+    const [articleData, tagData] = await Promise.all([getArticles(force), getTags(force)]);
     articles.value = articleData;
     tags.value = tagData;
     hasLoaded = true;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load data.';
+    error.value = err instanceof Error ? err.message : 'Could not reach Promptual. Check your connection and try again.';
   } finally {
     loading.value = false;
   }
@@ -27,7 +27,7 @@ async function loadAll() {
 
 function forceReload() {
   hasLoaded = false;
-  return loadAll();
+  return loadAll(true);
 }
 
 export function usePromptualData() {
