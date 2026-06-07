@@ -7,18 +7,8 @@
       </ion-button>
     </div>
 
-    <div class="tag-filter__safety" aria-label="NSFW filter">
-      <ion-segment :value="nsfwFilter" @ionChange="setNsfwFilter">
-        <ion-segment-button value="all">
-          <ion-label>All</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="safe">
-          <ion-label>Safe</ion-label>
-        </ion-segment-button>
-        <ion-segment-button value="nsfw">
-          <ion-label>NSFW</ion-label>
-        </ion-segment-button>
-      </ion-segment>
+    <div class="tag-filter__safety">
+      <NsfwFilter :model-value="nsfwFilter" @update:model-value="setNsfwFilter" />
     </div>
 
     <div v-if="tags.length > 0" class="tag-filter__chips">
@@ -40,9 +30,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { IonChip, IonLabel, IonButton, IonSegment, IonSegmentButton } from '@ionic/vue';
+import { IonChip, IonLabel, IonButton } from '@ionic/vue';
+import NsfwFilter from './NsfwFilter.vue';
 import type { Tag } from '../types';
-import type { SegmentChangeEventDetail } from '@ionic/vue';
 
 interface Props {
   tags: Tag[];
@@ -74,11 +64,8 @@ function toggleTag(tagId: string) {
   emit('toggleTag', tagId);
 }
 
-function setNsfwFilter(event: CustomEvent<SegmentChangeEventDetail>) {
-  const value = event.detail.value;
-  if (value === 'all' || value === 'safe' || value === 'nsfw') {
-    emit('nsfwFilterChange', value);
-  }
+function setNsfwFilter(value: 'all' | 'safe' | 'nsfw') {
+  emit('nsfwFilterChange', value);
 }
 
 function clearAll() {
@@ -113,21 +100,6 @@ function clearAll() {
 
 .tag-filter__safety {
   margin-bottom: var(--space-sm);
-}
-
-.tag-filter__safety ion-segment {
-  width: min(100%, 360px);
-  --background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-}
-
-.tag-filter__safety :deep(ion-segment-button) {
-  min-height: 44px;
-  --indicator-color: var(--ion-color-primary);
-  --color: var(--color--gray-20);
-  --color-checked: var(--color--on-accent);
-  font-weight: 700;
 }
 
 .tag-filter :deep(ion-chip) {

@@ -36,6 +36,10 @@
         <p class="page-copy">A calm place to look around, open an image, and save what catches your eye.</p>
       </section>
 
+      <section class="browse-filter section-pad">
+        <NsfwFilter :model-value="uiStore.nsfwFilter" @update:model-value="uiStore.setNsfwFilter" />
+      </section>
+
       <OnboardingTips v-if="!store.error" @search="goToTags" />
 
       <ErrorState
@@ -48,7 +52,7 @@
 
       <ArticleGrid
         v-else
-        :articles="store.favoritedArticles"
+        :articles="visibleArticles"
         :has-more="store.hasMore"
         :is-loading="store.isLoading"
         :load-more="onLoadMore"
@@ -60,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import {
   IonPage,
   IonHeader,
@@ -77,11 +81,27 @@ import { useRouter } from 'vue-router';
 import { searchOutline } from 'ionicons/icons';
 import ArticleGrid from '@/components/ArticleGrid.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import NsfwFilter from '@/components/NsfwFilter.vue';
 import OnboardingTips from '@/components/OnboardingTips.vue';
 import { useArticlesStore } from '@/stores/articles';
+import { useUiStore } from '@/stores/ui';
+import type { Article } from '@/types';
 
 const router = useRouter();
 const store = useArticlesStore();
+const uiStore = useUiStore();
+
+const visibleArticles = computed(() => filterByNsfw(store.favoritedArticles));
+
+function filterByNsfw(articles: Article[]) {
+  if (uiStore.nsfwFilter === 'safe') {
+    return articles.filter(article => !article.nsfw);
+  }
+  if (uiStore.nsfwFilter === 'nsfw') {
+    return articles.filter(article => article.nsfw);
+  }
+  return articles;
+}
 
 async function onLoadMore() {
   await store.loadNextPage();
@@ -108,6 +128,7 @@ async function retryGallery() {
 }
 
 onMounted(async () => {
+  uiStore.loadFromUrlParams();
   if (store.articles.length === 0) {
     await store.loadNextPage();
   }
@@ -116,6 +137,11 @@ onMounted(async () => {
 
 <style scoped>
 .gallery-intro {
+  padding-bottom: var(--space-md);
+}
+
+.browse-filter {
+  padding-top: 0;
   padding-bottom: var(--space-md);
 }
 

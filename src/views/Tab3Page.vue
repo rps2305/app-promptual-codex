@@ -42,6 +42,10 @@
         </ion-button>
       </section>
 
+      <section class="browse-filter section-pad">
+        <NsfwFilter :model-value="uiStore.nsfwFilter" @update:model-value="uiStore.setNsfwFilter" />
+      </section>
+
       <ErrorState
         v-if="store.error"
         :error="store.error"
@@ -82,17 +86,31 @@ import {
 import { searchOutline, refreshOutline } from 'ionicons/icons';
 import ArticleGrid from '@/components/ArticleGrid.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import NsfwFilter from '@/components/NsfwFilter.vue';
 import { useArticlesStore } from '@/stores/articles';
+import { useUiStore } from '@/stores/ui';
 import type { Article } from '@/types';
 
 const router = useRouter();
 const store = useArticlesStore();
+const uiStore = useUiStore();
 const randomArticles = ref<Article[]>([]);
 const RANDOM_COUNT = 8;
+const RANDOM_SAMPLE_COUNT = 32;
 
 async function refreshRandom() {
-  const random = await store.loadRandom(RANDOM_COUNT);
-  randomArticles.value = random;
+  const random = await store.loadRandom(uiStore.nsfwFilter === 'all' ? RANDOM_COUNT : RANDOM_SAMPLE_COUNT);
+  randomArticles.value = filterByNsfw(random).slice(0, RANDOM_COUNT);
+}
+
+function filterByNsfw(articles: Article[]) {
+  if (uiStore.nsfwFilter === 'safe') {
+    return articles.filter(article => !article.nsfw);
+  }
+  if (uiStore.nsfwFilter === 'nsfw') {
+    return articles.filter(article => article.nsfw);
+  }
+  return articles;
 }
 
 function onToggleFavorite(articleId: string) {
@@ -125,7 +143,15 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => uiStore.nsfwFilter,
+  () => {
+    refreshRandom();
+  }
+);
+
 onMounted(async () => {
+  uiStore.loadFromUrlParams();
   if (store.articles.length === 0) {
     await store.loadNextPage();
   }
@@ -142,6 +168,11 @@ onMounted(async () => {
 .random-intro ion-button {
   min-height: 44px;
   margin: 0;
+}
+
+.browse-filter {
+  padding-top: 0;
+  padding-bottom: var(--space-md);
 }
 
 .title-row {
