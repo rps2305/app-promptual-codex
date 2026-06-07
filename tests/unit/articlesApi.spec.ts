@@ -20,6 +20,13 @@ function article(id: string, title: string, prompt = title) {
   };
 }
 
+function nsfwArticle(id: string, title: string, prompt = title) {
+  return {
+    ...article(id, title, prompt),
+    field_nsfw: true,
+  };
+}
+
 function jsonResponse(data: unknown, hasNext: boolean) {
   return {
     ok: true,
@@ -82,6 +89,21 @@ describe('articles API pagination', () => {
     const results = await searchArticles({ query: 'nebula' });
 
     expect(results.map(item => item.id)).toEqual(['a-2']);
+  });
+
+  it('filters search results by NSFW state', async () => {
+    const fetchMock = vi.fn(async () => {
+      return jsonResponse([article('a-1', 'Landscape'), nsfwArticle('a-2', 'Figure study')], false);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const safeResults = await searchArticles({ nsfwFilter: 'safe' });
+    expect(safeResults.map(item => item.id)).toEqual(['a-1']);
+
+    localStorage.clear();
+
+    const nsfwResults = await searchArticles({ nsfwFilter: 'nsfw' });
+    expect(nsfwResults.map(item => item.id)).toEqual(['a-2']);
   });
 
   it('loads a single article from JSON API object data responses', async () => {

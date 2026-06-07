@@ -41,6 +41,7 @@ export interface PaginatedResponse<T> {
 export interface SearchOptions {
   query?: string;
   tagIds?: string[];
+  nsfwFilter?: 'all' | 'safe' | 'nsfw';
   page?: number;
   limit?: number;
 }

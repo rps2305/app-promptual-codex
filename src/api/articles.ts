@@ -156,9 +156,9 @@ export async function getArticleById(id: string): Promise<Article | null> {
 }
 
 export async function searchArticles(options: SearchOptions = {}): Promise<Article[]> {
-  const { query, tagIds, page = 1, limit = PAGE_LIMIT } = options;
+  const { query, tagIds, nsfwFilter = 'all', page = 1, limit = PAGE_LIMIT } = options;
 
-  if (!query && (!tagIds || tagIds.length === 0)) {
+  if (!query && (!tagIds || tagIds.length === 0) && nsfwFilter === 'all') {
     const result = await getArticles(page, limit);
     return result.data;
   }
@@ -180,6 +180,12 @@ export async function searchArticles(options: SearchOptions = {}): Promise<Artic
     filtered = filtered.filter(article =>
       article.tags.some(tag => tagIds.includes(tag.id))
     );
+  }
+
+  if (nsfwFilter === 'safe') {
+    filtered = filtered.filter(article => !article.nsfw);
+  } else if (nsfwFilter === 'nsfw') {
+    filtered = filtered.filter(article => article.nsfw);
   }
 
   return filtered;

@@ -2,9 +2,12 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Article } from '../types';
 
+type NsfwFilter = 'all' | 'safe' | 'nsfw';
+
 const MAX_QUERY_LENGTH = 120;
 const MAX_RECENT_SEARCHES = 5;
 const MAX_URL_TAGS = 20;
+const NSFW_FILTERS = new Set<NsfwFilter>(['all', 'safe', 'nsfw']);
 
 function normalizeQuery(value: string) {
   return value.trim().slice(0, MAX_QUERY_LENGTH);
@@ -13,13 +16,14 @@ function normalizeQuery(value: string) {
 export const useUiStore = defineStore('ui', () => {
   const query = ref('');
   const selectedTagIds = ref<string[]>([]);
+  const nsfwFilter = ref<NsfwFilter>('all');
   const recentSearches = ref<string[]>([]);
   const filteredArticles = ref<Article[]>([]);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   const hasFilters = computed(() => {
-    return query.value.length > 0 || selectedTagIds.value.length > 0;
+    return query.value.length > 0 || selectedTagIds.value.length > 0 || nsfwFilter.value !== 'all';
   });
 
   function setQuery(value: string) {
@@ -29,6 +33,11 @@ export const useUiStore = defineStore('ui', () => {
 
   function setSelectedTagIds(ids: string[]) {
     selectedTagIds.value = [...new Set(ids.filter(Boolean))].slice(0, MAX_URL_TAGS);
+    updateUrlParams();
+  }
+
+  function setNsfwFilter(value: NsfwFilter) {
+    nsfwFilter.value = NSFW_FILTERS.has(value) ? value : 'all';
     updateUrlParams();
   }
 
@@ -45,6 +54,7 @@ export const useUiStore = defineStore('ui', () => {
   function clearAllFilters() {
     query.value = '';
     selectedTagIds.value = [];
+    nsfwFilter.value = 'all';
     updateUrlParams();
   }
 
@@ -118,8 +128,14 @@ export const useUiStore = defineStore('ui', () => {
       currentQuery.delete('tags');
     }
 
+    if (nsfwFilter.value !== 'all') {
+      currentQuery.set('nsfw', nsfwFilter.value);
+    } else {
+      currentQuery.delete('nsfw');
+    }
+
     const queryString = currentQuery.toString();
-    const newPath = queryString ? `?${queryString}` : '';
+    const newPath = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
     window.history.replaceState({}, '', newPath);
   }
 
@@ -127,6 +143,7 @@ export const useUiStore = defineStore('ui', () => {
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
     const tags = params.get('tags');
+    const nsfw = params.get('nsfw');
 
     if (q) {
       query.value = normalizeQuery(q);
@@ -135,11 +152,16 @@ export const useUiStore = defineStore('ui', () => {
     if (tags) {
       selectedTagIds.value = [...new Set(tags.split(',').filter(Boolean))].slice(0, MAX_URL_TAGS);
     }
+
+    if (nsfw && NSFW_FILTERS.has(nsfw as NsfwFilter)) {
+      nsfwFilter.value = nsfw as NsfwFilter;
+    }
   }
 
   return {
     query,
     selectedTagIds,
+    nsfwFilter,
     recentSearches,
     filteredArticles,
     isLoading,
@@ -147,6 +169,7 @@ export const useUiStore = defineStore('ui', () => {
     hasFilters,
     setQuery,
     setSelectedTagIds,
+    setNsfwFilter,
     toggleTag,
     clearAllFilters,
     addRecentSearch,

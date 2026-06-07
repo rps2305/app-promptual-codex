@@ -1,5 +1,5 @@
 <template>
-  <ion-card class="article-card" :class="{ 'article-card--featured': featured }">
+  <ion-card class="article-card">
     <div class="article-card__media" :style="mediaStyle">
       <ion-img
         v-if="article.imageUrl && !imageFailed"
@@ -63,13 +63,11 @@ interface Props {
   article: Article;
   showPrompt?: boolean;
   showFavorite?: boolean;
-  featured?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showPrompt: true,
-  showFavorite: true,
-  featured: false
+  showFavorite: true
 });
 
 const emit = defineEmits<{
@@ -243,10 +241,6 @@ function toggleFavorite(event: Event) {
   --padding-top: 8px;
   --padding-bottom: 8px;
   backdrop-filter: blur(8px);
-}
-
-.article-card--featured :deep(ion-card-title) {
-  font-size: clamp(1.2rem, 4vw, 1.5rem);
 }
 
 @media (prefers-reduced-motion: reduce) {

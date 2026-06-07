@@ -46,7 +46,9 @@
           v-if="articlesStore.articles.length > 0"
           :tags="getAllTags()"
           :selected-tag-ids="uiStore.selectedTagIds"
+          :nsfw-filter="uiStore.nsfwFilter"
           @toggle-tag="uiStore.toggleTag"
+          @nsfw-filter-change="uiStore.setNsfwFilter"
           @clear-all="uiStore.clearAllFilters"
         />
       </div>
@@ -203,7 +205,8 @@ async function performSearch() {
 
     const results = await searchArticles({
       query: uiStore.query || undefined,
-      tagIds: uiStore.selectedTagIds.length > 0 ? uiStore.selectedTagIds : undefined
+      tagIds: uiStore.selectedTagIds.length > 0 ? uiStore.selectedTagIds : undefined,
+      nsfwFilter: uiStore.nsfwFilter
     });
 
     if (requestId === searchRequestId) {
@@ -248,7 +251,7 @@ function debouncedSearch() {
     clearTimeout(debounceTimer);
   }
   debounceTimer = setTimeout(() => {
-    if (uiStore.query || uiStore.selectedTagIds.length > 0) {
+    if (uiStore.hasFilters) {
       performSearch();
     } else {
       filteredArticles.value = [];
@@ -257,7 +260,7 @@ function debouncedSearch() {
 }
 
 watch(
-  () => [uiStore.query, uiStore.selectedTagIds.join(',')],
+  () => [uiStore.query, uiStore.selectedTagIds.join(','), uiStore.nsfwFilter],
   debouncedSearch
 );
 
@@ -271,7 +274,7 @@ onMounted(async () => {
   await articlesStore.loadNextPage();
   uiStore.loadFromUrlParams();
 
-  if (uiStore.query || uiStore.selectedTagIds.length > 0) {
+  if (uiStore.hasFilters) {
     await performSearch();
   }
 });

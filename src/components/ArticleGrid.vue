@@ -2,16 +2,14 @@
   <section class="article-grid-wrap">
     <div class="article-grid">
       <router-link
-        v-for="(article, index) in articles"
+        v-for="article in articles"
         :key="article.id"
         :to="`/tabs/tab1/${article.id}`"
         class="card-link"
-        :class="{ 'card-link--featured': index === 0 && articles.length > 2 }"
         @click="openArticle(article.id)"
       >
         <ArticleCard
           :article="article"
-          :featured="index === 0 && articles.length > 2"
           @toggle-favorite="onToggleFavorite"
         />
       </router-link>
@@ -75,6 +73,15 @@ function openArticle(articleId: string) {
 }
 
 function scrollToTop() {
+  const activeContent = document.querySelector(
+    'ion-router-outlet .ion-page:not(.ion-page-hidden) ion-content'
+  ) as HTMLIonContentElement | null;
+
+  if (activeContent?.scrollToTop) {
+    activeContent.scrollToTop(500);
+    return;
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
@@ -103,21 +110,6 @@ function scrollToTop() {
   min-width: 0;
   cursor: pointer;
   touch-action: manipulation;
-}
-
-@media (min-width: 760px) {
-  .card-link--featured {
-    grid-column: span 2;
-  }
-
-  .card-link--featured :deep(.article-card) {
-    display: grid;
-    grid-template-columns: minmax(320px, 58%) 1fr;
-  }
-
-  .card-link--featured :deep(.article-card__media) {
-    height: 100%;
-  }
 }
 
 .end-message {
