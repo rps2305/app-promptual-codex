@@ -110,6 +110,8 @@ function scrollToTop() {
   min-width: 0;
   cursor: pointer;
   touch-action: manipulation;
+  content-visibility: auto;
+  contain-intrinsic-size: 520px;
 }
 
 .end-message {
