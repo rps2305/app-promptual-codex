@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getAllArticles, searchArticles } from '@/api/articles';
+import { getAllArticles, getArticleById, searchArticles } from '@/api/articles';
 import { joinUrl } from '@/api/adapter';
 
 function article(id: string, title: string, prompt = title) {
@@ -81,5 +81,21 @@ describe('articles API pagination', () => {
     const results = await searchArticles({ query: 'nebula' });
 
     expect(results.map(item => item.id)).toEqual(['a-2']);
+  });
+
+  it('loads a single article from JSON API object data responses', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({
+        data: article('a-4', 'Saved favorite'),
+      }),
+    } as Response)));
+
+    const result = await getArticleById('a-4');
+
+    expect(result?.id).toBe('a-4');
+    expect(result?.title).toBe('Saved favorite');
   });
 });

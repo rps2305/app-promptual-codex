@@ -28,10 +28,14 @@ type RawArticle = {
 };
 
 type ApiResponse<T> = {
-  data: T[];
+  data: T[] | T;
   links?: { next?: string };
   meta?: { count?: number };
 };
+
+function responseItems<T>(response: ApiResponse<T>): T[] {
+  return Array.isArray(response.data) ? response.data : [response.data];
+}
 
 export async function getArticles(page: number, limit: number = PAGE_LIMIT): Promise<PaginatedResponse<Article>> {
   const offset = (page - 1) * limit;
@@ -52,10 +56,11 @@ export async function getArticles(page: number, limit: number = PAGE_LIMIT): Pro
 
   try {
     const response = await get<ApiResponse<RawArticle>>(url);
-    const data = response.data.map(normalizeArticle);
+    const responseData = responseItems(response);
+    const data = responseData.map(normalizeArticle);
     const total = response.meta?.count ?? MAX_ARTICLES;
     const totalPages = Math.ceil(total / limit);
-    const hasMore = Boolean(response.links?.next) || (response.data.length === limit && (page * limit) < total);
+    const hasMore = Boolean(response.links?.next) || (responseData.length === limit && (page * limit) < total);
 
     await set(cacheKey, data, { page, totalPages });
 
@@ -133,11 +138,12 @@ export async function getArticleById(id: string): Promise<Article | null> {
 
   try {
     const response = await get<ApiResponse<RawArticle>>(url);
-    if (!response.data.length) {
+    const responseData = responseItems(response);
+    if (!responseData.length) {
       return null;
     }
 
-    const article = normalizeArticle(response.data[0]);
+    const article = normalizeArticle(responseData[0]);
     await set(cacheKey, article);
 
     return article;

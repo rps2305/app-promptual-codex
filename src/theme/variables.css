@@ -124,6 +124,7 @@ body {
 
 ion-content {
   --background: transparent;
+  --padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
 ion-toolbar {

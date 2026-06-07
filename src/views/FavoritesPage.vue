@@ -89,8 +89,8 @@ async function onRefresh(event: CustomEvent) {
 }
 
 async function loadSavedArticles() {
-  if (store.favoriteCount > 0 && store.articles.length === 0) {
-    await store.loadNextPage();
+  if (store.favoriteCount > 0) {
+    await store.loadFavoriteArticles();
   }
 }
 

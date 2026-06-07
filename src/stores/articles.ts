@@ -40,6 +40,7 @@ export const useArticlesStore = defineStore('articles', () => {
   });
 
   const favoriteCount = computed(() => favorites.value.size);
+  const favoriteIds = computed(() => [...favorites.value]);
 
   async function loadNextPage() {
     if (isLoading.value || !hasMore.value) {
@@ -95,6 +96,32 @@ export const useArticlesStore = defineStore('articles', () => {
     } catch (err) {
       console.error('Error loading article:', err);
       throw err;
+    }
+  }
+
+  async function loadFavoriteArticles(): Promise<void> {
+    if (favorites.value.size === 0) {
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const missingIds = [...favorites.value].filter((id) => {
+        return !articles.value.some(article => article.id === id) && !favoriteSnapshots.value[id];
+      });
+
+      await Promise.all(missingIds.map(id => loadArticle(id)));
+
+      articles.value.forEach(article => {
+        article.isFavorite = favorites.value.has(article.id);
+      });
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load favorites';
+      console.error('Error loading favorite articles:', err);
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -222,8 +249,10 @@ export const useArticlesStore = defineStore('articles', () => {
     favoritedArticles,
     favoritesList,
     favoriteCount,
+    favoriteIds,
     loadNextPage,
     loadArticle,
+    loadFavoriteArticles,
     loadRandom,
     toggleFavorite,
     resetPagination,
