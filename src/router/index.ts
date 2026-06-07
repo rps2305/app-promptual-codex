@@ -44,4 +44,36 @@ const router = createRouter({
   routes
 })
 
+const STALE_CHUNK_RELOAD_KEY = 'promptual:stale-chunk-reload';
+
+function isStaleChunkError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return [
+    'Importing a module script failed',
+    'Failed to fetch dynamically imported module',
+    'error loading dynamically imported module',
+    'Loading chunk',
+    'module script failed'
+  ].some(fragment => message.includes(fragment));
+}
+
+router.onError((error, to) => {
+  if (!isStaleChunkError(error) || typeof window === 'undefined') {
+    return;
+  }
+
+  if (sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY) === '1') {
+    return;
+  }
+
+  sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, '1');
+  window.location.assign(to.fullPath || window.location.pathname);
+});
+
+router.afterEach(() => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem(STALE_CHUNK_RELOAD_KEY);
+  }
+});
+
 export default router

@@ -23,6 +23,9 @@ export default defineConfig({
       ],
       manifest: false,
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,woff2}'],
         runtimeCaching: [
           {
