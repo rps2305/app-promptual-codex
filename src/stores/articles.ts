@@ -1,13 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { getArticleSample, getArticles, getArticleById } from '../api/articles';
+import { getRandomArticles, getArticles, getArticleById } from '../api/articles';
 import type { Article } from '../types';
 
 const FAVORITES_KEY = 'promptual:favorites';
 const FAVORITE_ARTICLES_KEY = 'promptual:favoriteArticles';
-const RANDOM_PREFETCH_PAGES = 3;
-const RANDOM_PAGE_SIZE = 50;
-
 export const useArticlesStore = defineStore('articles', () => {
   const articles = ref<Article[]>([]);
   const currentPage = ref(1);
@@ -126,28 +123,21 @@ export const useArticlesStore = defineStore('articles', () => {
   }
 
   async function loadRandom(count: number = 8): Promise<Article[]> {
-    if (articles.value.length < count && hasMore.value) {
-      const sample = await getArticleSample(RANDOM_PREFETCH_PAGES * RANDOM_PAGE_SIZE);
-      const existingIds = new Set(articles.value.map(article => article.id));
-      sample.forEach((article) => {
-        if (!existingIds.has(article.id)) {
-          articles.value.push({
-            ...article,
-            isFavorite: favorites.value.has(article.id)
-          });
-        }
-      });
-      if (sample.length < RANDOM_PREFETCH_PAGES * RANDOM_PAGE_SIZE) {
-        hasMore.value = false;
-        hasLoadedAllArticles.value = true;
-      }
-    }
-
-    const shuffled = [...articles.value].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count).map(article => ({
+    const random = await getRandomArticles(count);
+    const existingIds = new Set(articles.value.map(article => article.id));
+    const randomWithFavorites = random.map(article => ({
       ...article,
       isFavorite: favorites.value.has(article.id)
     }));
+
+    randomWithFavorites.forEach((article) => {
+      if (!existingIds.has(article.id)) {
+        articles.value.push(article);
+      }
+    });
+
+    syncFavoriteSnapshots(randomWithFavorites);
+    return randomWithFavorites;
   }
 
   function toggleFavorite(articleId: string) {

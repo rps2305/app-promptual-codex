@@ -8,6 +8,7 @@ const CACHE_TTL = parseInt(import.meta.env.VITE_CACHE_TTL_MS || '1800000');
 const MAX_ARTICLES = parseInt(import.meta.env.VITE_MAX_ARTICLES || '2000');
 const MAX_SEARCH_ARTICLES = parseInt(import.meta.env.VITE_MAX_SEARCH_ARTICLES || '300');
 const API_MAX_PAGE_LIMIT = 50;
+const RANDOM_PAGE_FETCH_LIMIT = 8;
 
 type RawArticle = {
   id: string;
@@ -127,6 +128,39 @@ export async function getArticleSample(targetCount: number): Promise<Article[]> 
   return sample;
 }
 
+export async function getRandomArticles(targetCount: number): Promise<Article[]> {
+  const firstPage = await getArticles(1, API_MAX_PAGE_LIMIT);
+  const totalPages = Math.max(1, Math.ceil(firstPage.total / API_MAX_PAGE_LIMIT));
+  const pagePool = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const randomPages = shuffle(pagePool).slice(0, Math.min(totalPages, RANDOM_PAGE_FETCH_LIMIT));
+  const pages = randomPages.length > 0 ? randomPages : [1];
+  const articlePool: Article[] = [];
+  const seenIds = new Set<string>();
+
+  await Promise.all(
+    pages.map(async (page) => {
+      const response = page === 1 ? firstPage : await getArticles(page, API_MAX_PAGE_LIMIT);
+      response.data.forEach((article) => {
+        if (!seenIds.has(article.id)) {
+          seenIds.add(article.id);
+          articlePool.push(article);
+        }
+      });
+    })
+  );
+
+  if (articlePool.length < targetCount && !seenIds.size) {
+    firstPage.data.forEach((article) => {
+      if (!seenIds.has(article.id)) {
+        seenIds.add(article.id);
+        articlePool.push(article);
+      }
+    });
+  }
+
+  return shuffle(articlePool).slice(0, targetCount);
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
   const url = `node/article/${id}?include=field_image,field_tags,field_model`;
   const cacheKey = `article:${id}`;
@@ -201,4 +235,13 @@ export async function invalidate(pattern?: string): Promise<void> {
 
 export function hasMore(currentPage: number, loadedCount: number): boolean {
   return loadedCount < MAX_ARTICLES && loadedCount % PAGE_LIMIT === 0;
+}
+
+function shuffle<T>(items: T[]): T[] {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }

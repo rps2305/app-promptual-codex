@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getAllArticles, getArticleById, searchArticles } from '@/api/articles';
+import { getAllArticles, getArticleById, getRandomArticles, searchArticles } from '@/api/articles';
 import { joinUrl } from '@/api/adapter';
 
 function article(id: string, title: string, prompt = title) {
@@ -27,7 +27,7 @@ function nsfwArticle(id: string, title: string, prompt = title) {
   };
 }
 
-function jsonResponse(data: unknown, hasNext: boolean) {
+function jsonResponse(data: unknown, hasNext: boolean, total?: number) {
   return {
     ok: true,
     status: 200,
@@ -35,6 +35,7 @@ function jsonResponse(data: unknown, hasNext: boolean) {
     json: async () => ({
       data,
       links: hasNext ? { next: { href: 'next-page' } } : { self: { href: 'self' } },
+      meta: total === undefined ? undefined : { count: total },
     }),
   } as Response;
 }
@@ -89,6 +90,30 @@ describe('articles API pagination', () => {
     const results = await searchArticles({ query: 'nebula' });
 
     expect(results.map(item => item.id)).toEqual(['a-2']);
+  });
+
+  it('samples random articles from later API pages', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('page[offset]=0')) {
+        return jsonResponse([article('a-1', 'First page')], true, 500);
+      }
+      if (url.includes('page[offset]=50')) {
+        return jsonResponse([article('a-2', 'Second page')], true, 500);
+      }
+      if (url.includes('page[offset]=100')) {
+        return jsonResponse([article('a-3', 'Third page')], true, 500);
+      }
+      return jsonResponse([], false, 500);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const results = await getRandomArticles(2);
+
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('page[offset]=50'), expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('page[offset]=100'), expect.anything());
+    expect(results.map(item => item.id)).toEqual(['a-3', 'a-2']);
   });
 
   it('filters search results by NSFW state', async () => {
