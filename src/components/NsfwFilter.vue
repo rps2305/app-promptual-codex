@@ -45,16 +45,26 @@ function setNsfwFilter(event: CustomEvent<SegmentChangeEventDetail>) {
 
 .nsfw-filter ion-segment {
   width: min(100%, 360px);
-  --background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
+  --background: var(--surface);
+  border: 1px solid var(--color--gray-85);
   border-radius: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .nsfw-filter :deep(ion-segment-button) {
   min-height: 44px;
-  --indicator-color: var(--ion-color-primary);
-  --color: var(--color--gray-20);
+  --indicator-color: var(--color--gray-5);
+  --color: var(--color--gray-5);
   --color-checked: var(--color--on-accent);
   font-weight: 700;
+  opacity: 1;
+}
+
+.nsfw-filter :deep(ion-segment-button::part(native)) {
+  opacity: 1;
+}
+
+.nsfw-filter :deep(ion-segment-button::part(indicator-background)) {
+  box-shadow: 0 1px 3px rgba(18, 24, 31, 0.18);
 }
 </style>
