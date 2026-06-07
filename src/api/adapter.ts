@@ -6,6 +6,18 @@ interface RetryOptions {
   maxDelay?: number;
 }
 
+const DEFAULT_API_BASE_URL = '/jsonapi/';
+
+function joinUrl(baseUrl: string | undefined, path: string): string {
+  const resolvedBase = baseUrl || DEFAULT_API_BASE_URL;
+
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return `${resolvedBase.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+}
+
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -65,7 +77,7 @@ async function fetchWithTimeout(
 }
 
 export async function get<T>(url: string): Promise<T> {
-  const apiUrl = `${import.meta.env.VITE_API_BASE_URL}${url}`;
+  const apiUrl = joinUrl(import.meta.env.VITE_API_BASE_URL, url);
 
   try {
     const response = await retryWithBackoff(async () => {
@@ -96,4 +108,4 @@ export async function get<T>(url: string): Promise<T> {
   }
 }
 
-export { retryWithBackoff, fetchWithTimeout };
+export { retryWithBackoff, fetchWithTimeout, joinUrl };

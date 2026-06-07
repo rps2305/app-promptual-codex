@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { getAllArticles, getArticles, getArticleById } from '../api/articles';
+import { getArticleSample, getArticles, getArticleById } from '../api/articles';
 import type { Article } from '../types';
+
+const FAVORITES_KEY = 'promptual:favorites';
+const FAVORITE_ARTICLES_KEY = 'promptual:favoriteArticles';
+const RANDOM_PREFETCH_PAGES = 3;
+const RANDOM_PAGE_SIZE = 50;
 
 export const useArticlesStore = defineStore('articles', () => {
   const articles = ref<Article[]>([]);
@@ -12,6 +17,7 @@ export const useArticlesStore = defineStore('articles', () => {
   const hasLoadedAllArticles = ref(false);
 
   const favorites = ref<Set<string>>(new Set());
+  const favoriteSnapshots = ref<Record<string, Article>>({});
 
   const favoritedArticles = computed(() => {
     return articles.value.map(article => ({
@@ -20,10 +26,17 @@ export const useArticlesStore = defineStore('articles', () => {
     }));
   });
 
-  const favoritesList = computed(() => {
-    return articles.value.filter(article =>
-      favorites.value.has(article.id)
-    );
+  const favoritesList = computed<Article[]>(() => {
+    const savedArticles: Article[] = [];
+
+    favorites.value.forEach((id) => {
+      const article = articles.value.find(item => item.id === id) ?? favoriteSnapshots.value[id];
+      if (article) {
+        savedArticles.push({ ...article, isFavorite: true });
+      }
+    });
+
+    return savedArticles;
   });
 
   const favoriteCount = computed(() => favorites.value.size);
@@ -45,6 +58,7 @@ export const useArticlesStore = defineStore('articles', () => {
       }));
 
       articles.value.push(...articlesWithFavorites);
+      syncFavoriteSnapshots(articlesWithFavorites);
       hasMore.value = response.hasMore;
       if (!response.hasMore) {
         hasLoadedAllArticles.value = true;
@@ -73,6 +87,7 @@ export const useArticlesStore = defineStore('articles', () => {
         } else {
           articles.value.push(articleWithFavorite);
         }
+        syncFavoriteSnapshots([articleWithFavorite]);
 
         return articleWithFavorite;
       }
@@ -84,10 +99,10 @@ export const useArticlesStore = defineStore('articles', () => {
   }
 
   async function loadRandom(count: number = 8): Promise<Article[]> {
-    if (!hasLoadedAllArticles.value) {
-      const allArticles = await getAllArticles();
+    if (articles.value.length < count && hasMore.value) {
+      const sample = await getArticleSample(RANDOM_PREFETCH_PAGES * RANDOM_PAGE_SIZE);
       const existingIds = new Set(articles.value.map(article => article.id));
-      allArticles.forEach((article) => {
+      sample.forEach((article) => {
         if (!existingIds.has(article.id)) {
           articles.value.push({
             ...article,
@@ -95,8 +110,10 @@ export const useArticlesStore = defineStore('articles', () => {
           });
         }
       });
-      hasMore.value = false;
-      hasLoadedAllArticles.value = true;
+      if (sample.length < RANDOM_PREFETCH_PAGES * RANDOM_PAGE_SIZE) {
+        hasMore.value = false;
+        hasLoadedAllArticles.value = true;
+      }
     }
 
     const shuffled = [...articles.value].sort(() => Math.random() - 0.5);
@@ -116,6 +133,11 @@ export const useArticlesStore = defineStore('articles', () => {
     const article = articles.value.find(a => a.id === articleId);
     if (article) {
       article.isFavorite = favorites.value.has(articleId);
+      if (favorites.value.has(articleId)) {
+        favoriteSnapshots.value[articleId] = { ...article, isFavorite: true };
+      } else {
+        delete favoriteSnapshots.value[articleId];
+      }
     }
 
     persistFavorites();
@@ -131,16 +153,28 @@ export const useArticlesStore = defineStore('articles', () => {
 
   function loadFavorites() {
     try {
-      const stored = localStorage.getItem('promptual:favorites');
+      const stored = localStorage.getItem(FAVORITES_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           favorites.value = new Set(parsed.filter((item): item is string => typeof item === 'string'));
         }
-        articles.value.forEach(article => {
-          article.isFavorite = favorites.value.has(article.id);
-        });
       }
+
+      const storedArticles = localStorage.getItem(FAVORITE_ARTICLES_KEY);
+      if (storedArticles) {
+        const parsedArticles = JSON.parse(storedArticles);
+        if (parsedArticles && typeof parsedArticles === 'object' && !Array.isArray(parsedArticles)) {
+          favoriteSnapshots.value = Object.fromEntries(
+            Object.entries(parsedArticles)
+              .filter(([id, article]) => favorites.value.has(id) && isArticleSnapshot(article))
+          ) as Record<string, Article>;
+        }
+      }
+
+      articles.value.forEach(article => {
+        article.isFavorite = favorites.value.has(article.id);
+      });
     } catch (err) {
       console.error('Error loading favorites:', err);
     }
@@ -148,10 +182,35 @@ export const useArticlesStore = defineStore('articles', () => {
 
   function persistFavorites() {
     try {
-      localStorage.setItem('promptual:favorites', JSON.stringify([...favorites.value]));
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites.value]));
+      localStorage.setItem(FAVORITE_ARTICLES_KEY, JSON.stringify(favoriteSnapshots.value));
     } catch (err) {
       console.error('Error persisting favorites:', err);
     }
+  }
+
+  function syncFavoriteSnapshots(articleList: Article[]) {
+    let changed = false;
+    articleList.forEach((article) => {
+      if (favorites.value.has(article.id)) {
+        favoriteSnapshots.value[article.id] = { ...article, isFavorite: true };
+        changed = true;
+      }
+    });
+    if (changed) {
+      persistFavorites();
+    }
+  }
+
+  function isArticleSnapshot(value: unknown): value is Article {
+    return Boolean(
+      value &&
+      typeof value === 'object' &&
+      'id' in value &&
+      'title' in value &&
+      typeof (value as Article).id === 'string' &&
+      typeof (value as Article).title === 'string'
+    );
   }
 
   return {

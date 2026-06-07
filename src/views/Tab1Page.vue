@@ -4,13 +4,13 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
             Promptual Gallery
           </span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
+          <ion-button aria-label="Search images and tags" @click="goToTags">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="searchOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -23,7 +23,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
               Promptual Gallery
             </span>
           </ion-title>
@@ -31,7 +31,7 @@
       </ion-header>
 
       <section class="page-intro gallery-intro">
-        <p class="page-eyebrow">Promptual Gallery</p>
+        <p class="page-eyebrow">Gallery</p>
         <h1 class="page-heading">Browse recent AI images</h1>
         <p class="page-copy">A calm place to look around, open an image, and save what catches your eye.</p>
       </section>

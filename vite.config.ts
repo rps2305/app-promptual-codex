@@ -69,8 +69,17 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('/node_modules/@ionic/') || id.includes('/node_modules/ionicons/')) {
-            return 'ionic';
+          if (id.includes('/node_modules/@ionic/core/components/')) {
+            return 'ionic-components';
+          }
+          if (id.includes('/node_modules/@ionic/vue')) {
+            return 'ionic-vue';
+          }
+          if (id.includes('/node_modules/@ionic/')) {
+            return 'ionic-core';
+          }
+          if (id.includes('/node_modules/ionicons/')) {
+            return 'icons';
           }
           if (id.includes('/node_modules/@capacitor/')) {
             return 'capacitor';

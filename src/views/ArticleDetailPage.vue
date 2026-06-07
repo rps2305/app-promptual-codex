@@ -7,13 +7,13 @@
         </ion-buttons>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
             {{ article?.title ?? 'Artwork' }}
           </span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
+          <ion-button aria-label="Search images and tags" @click="goToTags">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="searchOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -48,15 +48,15 @@
           </div>
           <div class="detail-actions">
             <ion-button size="small" fill="outline" @click="toggleFavorite">
-              <ion-icon slot="start" :icon="article.isFavorite ? heart : heartOutline" />
+              <ion-icon slot="start" aria-hidden="true" :icon="article.isFavorite ? heart : heartOutline" />
               {{ article.isFavorite ? 'Saved' : 'Save' }}
             </ion-button>
             <ion-button size="small" fill="outline" @click="shareImage">
-              <ion-icon slot="start" :icon="shareSocialOutline" />
+              <ion-icon slot="start" aria-hidden="true" :icon="shareSocialOutline" />
               Share
             </ion-button>
             <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
-              <ion-icon slot="start" :icon="downloadOutline" />
+              <ion-icon slot="start" aria-hidden="true" :icon="downloadOutline" />
               Save image
             </ion-button>
           </div>
@@ -433,7 +433,7 @@ onMounted(() => {
 }
 
 .detail-actions ion-button {
-  min-height: 40px;
+  min-height: 44px;
   margin: 0;
 }
 
@@ -452,7 +452,7 @@ onMounted(() => {
 
 .detail-tags :deep(ion-chip[color='danger']) {
   --background: var(--color--red);
-  --color: #ffffff;
+  --color: var(--color--on-accent);
 }
 
 .detail-section {
@@ -494,8 +494,9 @@ onMounted(() => {
 }
 
 .detail-metadata div {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
 }
 
@@ -509,6 +510,17 @@ onMounted(() => {
   color: var(--color--gray-5);
   text-align: right;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .detail-metadata div {
+    grid-template-columns: 1fr;
+    gap: var(--space-2xs);
+  }
+
+  .detail-metadata dd {
+    text-align: start;
+  }
 }
 
 .detail-loading {

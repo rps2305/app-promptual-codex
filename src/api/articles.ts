@@ -6,6 +6,7 @@ import { Article, PaginatedResponse, SearchOptions, ApiError } from '../types';
 const PAGE_LIMIT = parseInt(import.meta.env.VITE_ARTICLE_PAGE_LIMIT || '30');
 const CACHE_TTL = parseInt(import.meta.env.VITE_CACHE_TTL_MS || '1800000');
 const MAX_ARTICLES = parseInt(import.meta.env.VITE_MAX_ARTICLES || '2000');
+const MAX_SEARCH_ARTICLES = parseInt(import.meta.env.VITE_MAX_SEARCH_ARTICLES || '300');
 const API_MAX_PAGE_LIMIT = 50;
 
 type RawArticle = {
@@ -98,6 +99,29 @@ export async function getAllArticles(): Promise<Article[]> {
   return allArticles;
 }
 
+export async function getArticleSample(targetCount: number): Promise<Article[]> {
+  const sample: Article[] = [];
+  const seenIds = new Set<string>();
+  let page = 1;
+  let hasMorePages = true;
+
+  while (hasMorePages && sample.length < targetCount) {
+    const response = await getArticles(page, API_MAX_PAGE_LIMIT);
+
+    response.data.forEach((article) => {
+      if (!seenIds.has(article.id) && sample.length < targetCount) {
+        seenIds.add(article.id);
+        sample.push(article);
+      }
+    });
+
+    hasMorePages = response.hasMore && response.data.length > 0;
+    page += 1;
+  }
+
+  return sample;
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
   const url = `node/article/${id}?include=field_image,field_tags,field_model`;
   const cacheKey = `article:${id}`;
@@ -133,7 +157,7 @@ export async function searchArticles(options: SearchOptions = {}): Promise<Artic
     return result.data;
   }
 
-  const allArticles = await getAllArticles();
+  const allArticles = await getArticleSample(MAX_SEARCH_ARTICLES);
 
   let filtered = allArticles;
 

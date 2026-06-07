@@ -109,7 +109,7 @@ onUnmounted(() => {
   top: 100%;
   left: 0;
   right: 0;
-  background: var(--ion-background-color, #fff);
+  background: var(--ion-background-color, var(--surface));
   border: 1px solid var(--border-subtle);
   border-radius: 0 0 10px 10px;
   box-shadow: var(--shadow-md);

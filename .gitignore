@@ -34,6 +34,7 @@ npm-debug.log*
 .env.local
 .env.*.local
 /.agents
+/.playwright-mcp
 /.npm-cache
 /.npm-cache-node20
 /android

@@ -3,17 +3,17 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button @click="onDismiss">
-            <ion-icon slot="icon-only" :icon="closeOutline" />
+          <ion-button aria-label="Close image viewer" @click="onDismiss">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="closeOutline" />
           </ion-button>
         </ion-buttons>
         <ion-title>Image Viewer</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="zoomOut" :disabled="zoomLevel <= 1">
-            <ion-icon slot="icon-only" :icon="removeOutline" />
+          <ion-button aria-label="Zoom out" @click="zoomOut" :disabled="zoomLevel <= 1">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="removeOutline" />
           </ion-button>
-          <ion-button @click="zoomIn" :disabled="zoomLevel >= 5">
-            <ion-icon slot="icon-only" :icon="addOutline" />
+          <ion-button aria-label="Zoom in" @click="zoomIn" :disabled="zoomLevel >= 5">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="addOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import {
   IonModal,
   IonHeader,
@@ -84,6 +84,7 @@ const maxZoom = 5;
 const position = ref({ x: 0, y: 0 });
 const isDragging = ref(false);
 const lastTouchDistance = ref(0);
+const lastTouchPoint = ref<{ x: number; y: number } | null>(null);
 
 const transformStyle = computed(() => {
   return {
@@ -146,6 +147,8 @@ function onTouchStart(event: TouchEvent) {
   if (event.touches.length === 2) {
     lastTouchDistance.value = getTouchDistance(event.touches);
   } else if (event.touches.length === 1) {
+    const touch = event.touches[0];
+    lastTouchPoint.value = { x: touch.clientX, y: touch.clientY };
     isDragging.value = true;
   }
 }
@@ -160,19 +163,23 @@ function onTouchMove(event: TouchEvent) {
       zoomLevel.value = newZoom;
       lastTouchDistance.value = currentDistance;
     }
-  } else if (event.touches.length === 1 && isDragging.value) {
+  } else if (event.touches.length === 1 && isDragging.value && lastTouchPoint.value) {
+    event.preventDefault();
     const touch = event.touches[0];
-    const deltaX = touch.clientX - (touch.clientX - event.changedTouches[0].clientX);
-    const deltaY = touch.clientY - (touch.clientY - event.changedTouches[0].clientY);
+    const deltaX = touch.clientX - lastTouchPoint.value.x;
+    const deltaY = touch.clientY - lastTouchPoint.value.y;
     position.value = {
       x: position.value.x + deltaX,
       y: position.value.y + deltaY
     };
+    lastTouchPoint.value = { x: touch.clientX, y: touch.clientY };
   }
 }
 
 function onTouchEnd() {
   isDragging.value = false;
+  lastTouchPoint.value = null;
+  lastTouchDistance.value = 0;
 }
 
 function onDismiss() {
@@ -202,9 +209,13 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
-if (typeof window !== 'undefined') {
+onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
-}
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
 
 const propsWatch = props;
 watch(
@@ -224,7 +235,7 @@ watch(
 }
 
 .image-viewer-content {
-  --background: #000;
+  --background: var(--viewer-background);
   display: flex;
   flex-direction: column;
 }
@@ -257,7 +268,7 @@ watch(
   bottom: 20px;
   left: 20px;
   right: 20px;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--viewer-overlay);
   padding: 16px;
   border-radius: 8px;
   text-align: center;
@@ -267,14 +278,14 @@ watch(
   display: block;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--viewer-text);
   margin-bottom: 8px;
 }
 
 .image-prompt {
   display: block;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--viewer-text-muted);
   line-height: 1.4;
 }
 </style>

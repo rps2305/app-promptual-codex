@@ -9,7 +9,7 @@
         loading="lazy"
       />
       <div v-else class="article-card__placeholder">
-        <ion-icon :icon="imageOutline" size="large" />
+        <ion-icon :icon="imageOutline" aria-hidden="true" size="large" />
         <span>Image unavailable</span>
       </div>
     </div>
@@ -37,7 +37,7 @@
       @click="toggleFavorite"
       :aria-label="article.isFavorite ? `Remove ${article.title} from favorites` : `Save ${article.title} to favorites`"
     >
-      <ion-icon slot="icon-only" :icon="article.isFavorite ? heart : heartOutline" />
+      <ion-icon slot="icon-only" aria-hidden="true" :icon="article.isFavorite ? heart : heartOutline" />
     </ion-button>
   </ion-card>
 </template>
@@ -177,7 +177,7 @@ function toggleFavorite(event: Event) {
 
 .article-card :deep(ion-chip[color='danger']) {
   --background: var(--color--red);
-  --color: #ffffff;
+  --color: var(--color--on-accent);
 }
 
 .article-card__media {
@@ -205,8 +205,12 @@ function toggleFavorite(event: Event) {
   gap: var(--space-xs);
   place-items: center;
   min-height: 180px;
-  background: linear-gradient(135deg, rgba(215, 206, 191, 0.5), rgba(242, 238, 230, 0.8));
-  color: rgba(78, 63, 40, 0.65);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--surface-muted) 70%, var(--color--gold)),
+    var(--surface-muted)
+  );
+  color: var(--text-muted);
   text-align: center;
   font-weight: 600;
 }
@@ -232,8 +236,8 @@ function toggleFavorite(event: Event) {
   width: 44px;
   height: 44px;
   --border-radius: 999px;
-  --background: rgba(255, 255, 255, 0.88);
-  --background-hover: #ffffff;
+  --background: color-mix(in srgb, var(--surface) 88%, transparent);
+  --background-hover: var(--surface);
   --padding-start: 8px;
   --padding-end: 8px;
   --padding-top: 8px;

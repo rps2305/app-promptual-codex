@@ -105,7 +105,7 @@ function goToSearch() {
 }
 
 .onboarding-tips__actions ion-button {
-  min-height: 40px;
+  min-height: 44px;
   margin: 0;
 }
 

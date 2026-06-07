@@ -199,7 +199,7 @@ const showBack = computed(() => {
 }
 
 .error-state__actions ion-button {
-  min-height: 40px;
+  min-height: 44px;
   margin: 0;
 }
 

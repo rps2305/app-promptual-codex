@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
             Tags
           </span>
         </ion-title>
@@ -18,7 +18,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
               Tags
             </span>
           </ion-title>
@@ -314,6 +314,7 @@ onMounted(async () => {
 .empty-state ion-button {
   justify-self: start;
   margin-top: var(--space-xs);
+  min-height: 44px;
 }
 
 .suggestion-list {
@@ -325,7 +326,7 @@ onMounted(async () => {
 
 .suggestion-list ion-button {
   margin: 0;
-  min-height: 36px;
+  min-height: 44px;
 }
 
 .title-row {

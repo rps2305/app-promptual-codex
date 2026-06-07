@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAllArticles, searchArticles } from '@/api/articles';
+import { joinUrl } from '@/api/adapter';
 
 function article(id: string, title: string, prompt = title) {
   return {
@@ -35,6 +36,14 @@ describe('articles API pagination', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  it('joins API base urls without dropping the jsonapi slash', () => {
+    expect(joinUrl('/jsonapi', 'node/article')).toBe('/jsonapi/node/article');
+    expect(joinUrl('/jsonapi/', '/node/article')).toBe('/jsonapi/node/article');
+    expect(joinUrl('https://promptual.puntuale.nl/jsonapi/', 'node/article')).toBe(
+      'https://promptual.puntuale.nl/jsonapi/node/article'
+    );
   });
 
   it('loads every paginated article instead of only the first API page', async () => {

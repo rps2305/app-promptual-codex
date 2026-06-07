@@ -4,13 +4,13 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
             Random
           </span>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="goToTags">
-            <ion-icon slot="icon-only" :icon="searchOutline" />
+          <ion-button aria-label="Search images and tags" @click="goToTags">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="searchOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -23,7 +23,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
               Random
             </span>
           </ion-title>
@@ -37,7 +37,7 @@
           <p class="page-copy">For when browsing needs a little chance.</p>
         </div>
         <ion-button size="small" fill="outline" :disabled="store.isLoading" @click="refreshRandom">
-          <ion-icon slot="start" :icon="refreshOutline" />
+          <ion-icon slot="start" aria-hidden="true" :icon="refreshOutline" />
           Refresh
         </ion-button>
       </section>
@@ -140,7 +140,7 @@ onMounted(async () => {
 }
 
 .random-intro ion-button {
-  min-height: 40px;
+  min-height: 44px;
   margin: 0;
 }
 

@@ -13,6 +13,8 @@
         :key="tag.id"
         :outline="!isSelected(tag.id)"
         :color="isSelected(tag.id) ? 'primary' : 'medium'"
+        :button="true"
+        :aria-pressed="isSelected(tag.id)"
         @click="toggleTag(tag.id)"
         :aria-label="isSelected(tag.id) ? `Remove ${tag.name} filter` : `Filter by ${tag.name}`"
       >
@@ -82,7 +84,7 @@ function clearAll() {
 }
 
 .tag-filter :deep(ion-chip) {
-  min-height: 32px;
+  min-height: 44px;
   margin: 0;
   cursor: pointer;
   transition: transform 160ms ease-out, box-shadow 160ms ease-out;

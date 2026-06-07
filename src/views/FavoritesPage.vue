@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+            <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
             Favorites
           </span>
         </ion-title>
@@ -18,7 +18,7 @@
         <ion-toolbar>
           <ion-title size="large">
             <span class="title-row">
-              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
               Favorites
             </span>
           </ion-title>
