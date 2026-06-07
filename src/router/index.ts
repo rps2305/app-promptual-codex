@@ -1,5 +1,10 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
+import ArticleDetailPage from '@/views/ArticleDetailPage.vue';
+import FavoritesPage from '@/views/FavoritesPage.vue';
+import Tab1Page from '@/views/Tab1Page.vue';
+import Tab2Page from '@/views/Tab2Page.vue';
+import Tab3Page from '@/views/Tab3Page.vue';
 import TabsPage from '../views/TabsPage.vue'
 
 const routes: Array<RouteRecordRaw> = [
@@ -17,23 +22,23 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: 'tab1',
-        component: () => import('@/views/Tab1Page.vue')
+        component: Tab1Page
       },
       {
         path: 'tab1/:id',
-        component: () => import('@/views/ArticleDetailPage.vue')
+        component: ArticleDetailPage
       },
       {
         path: 'tab2',
-        component: () => import('@/views/Tab2Page.vue')
+        component: Tab2Page
       },
       {
         path: 'tab3',
-        component: () => import('@/views/Tab3Page.vue')
+        component: Tab3Page
       },
       {
         path: 'favorites',
-        component: () => import('@/views/FavoritesPage.vue')
+        component: FavoritesPage
       }
     ]
   }

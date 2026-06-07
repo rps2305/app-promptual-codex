@@ -68,32 +68,6 @@ export default defineConfig({
       },
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('/node_modules/@ionic/core/components/')) {
-            return 'ionic-components';
-          }
-          if (id.includes('/node_modules/@ionic/vue')) {
-            return 'ionic-vue';
-          }
-          if (id.includes('/node_modules/@ionic/')) {
-            return 'ionic-core';
-          }
-          if (id.includes('/node_modules/ionicons/')) {
-            return 'icons';
-          }
-          if (id.includes('/node_modules/@capacitor/')) {
-            return 'capacitor';
-          }
-          if (id.includes('/node_modules/vue') || id.includes('/node_modules/@vue/')) {
-            return 'vue';
-          }
-        },
-      },
-    },
-  },
   test: {
     globals: true,
     environment: 'jsdom'
