@@ -4,10 +4,15 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <AppLogo />
+            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
             Random
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="goToTags">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
@@ -16,226 +21,147 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Random</ion-title>
+          <ion-title size="large">
+            <span class="title-row">
+              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              Random
+            </span>
+          </ion-title>
         </ion-toolbar>
       </ion-header>
 
-      <section class="page-section">
-        <div class="random-header">
-          <div>
-            <p class="page-kicker">{{ randomArticles.length }} images</p>
-            <ion-text v-if="error" color="danger">{{ error }}</ion-text>
-            <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
-              Try again
-            </ion-button>
-          </div>
-          <ion-button size="small" color="secondary" @click="refreshRandom">
-            <ion-icon slot="start" :icon="shuffleOutline" />
-            Refresh
-          </ion-button>
+      <section class="page-intro random-intro">
+        <div>
+          <p class="page-eyebrow">Random</p>
+          <h1 class="page-heading">A fresh handful of images</h1>
+          <p class="page-copy">For when browsing needs a little chance.</p>
         </div>
+        <ion-button size="small" fill="outline" :disabled="store.isLoading" @click="refreshRandom">
+          <ion-icon slot="start" :icon="refreshOutline" />
+          Refresh
+        </ion-button>
       </section>
 
-      <section class="page-section nsfw-section">
-        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
-          <ion-segment-button value="show" title="Display all images regardless of content rating">
-            <ion-label>All</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Safe</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
-            <ion-label>NSFW</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </section>
+      <ErrorState
+        v-if="store.error"
+        :error="store.error"
+        title="Random images did not load"
+        message="Check your connection, then try another random set."
+        retry-label="Try another set"
+        :on-retry="retryRandom"
+      />
 
-      <ion-grid>
-        <ion-row class="shuffle-row">
-          <ion-col
-            v-for="(article, index) in randomArticles"
-            :key="`${article.id}-${shuffleKey}`"
-            size="12"
-            size-md="6"
-            size-lg="6"
-            :style="{ '--card-index': index }"
-            class="random-card"
-          >
-            <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" />
-            </router-link>
-          </ion-col>
+      <ArticleGrid
+        v-else
+        :articles="randomArticles"
+        :has-more="false"
+        :is-loading="store.isLoading"
+        :load-more="() => {}"
+        @toggle-favorite="onToggleFavorite"
+      />
 
-          <template v-if="loading && !articles.length">
-            <ion-col
-              v-for="index in 8"
-              :key="`skeleton-${index}`"
-              size="12"
-              size-md="6"
-              size-lg="6"
-            >
-              <div class="skeleton-item">
-                <div class="skeleton-item__frame">
-                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
-                </div>
-                <div class="skeleton-item__caption">
-                  <ion-skeleton-text animated style="width: 70%; height: 14px; display: block" />
-                  <ion-skeleton-text animated style="width: 45%; height: 10px; display: block; margin-top: 6px" />
-                </div>
-              </div>
-            </ion-col>
-          </template>
-        </ion-row>
-      </ion-grid>
-
-      <ion-loading :is-open="loading" message="Picking images…" />
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
+  IonButtons,
   IonButton,
   IonIcon,
   IonContent,
-  IonGrid,
-  IonRow,
-  IonCol,
-
-  IonSkeletonText,
-  IonText,
   IonRefresher,
   IonRefresherContent,
-  IonLoading,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
 } from '@ionic/vue';
-import { shuffleOutline } from 'ionicons/icons';
-import ImageCard from '@/components/ImageCard.vue';
-import AppLogo from '@/components/AppLogo.vue';
-import { usePromptualData } from '@/composables/usePromptualData';
-import type { PromptualArticle } from '@/services/promptualApi';
+import { searchOutline, refreshOutline } from 'ionicons/icons';
+import ArticleGrid from '@/components/ArticleGrid.vue';
+import ErrorState from '@/components/ErrorState.vue';
+import { useArticlesStore } from '@/stores/articles';
+import type { Article } from '@/types';
 
-const { articles, loading, error, loadAll, forceReload } = usePromptualData();
-const randomArticles = ref<PromptualArticle[]>([]);
-const shuffleKey = ref(0);
+const router = useRouter();
+const store = useArticlesStore();
+const randomArticles = ref<Article[]>([]);
 const RANDOM_COUNT = 8;
-const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
 
-function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
-  localStorage.setItem('promptual:nsfwFilter', value);
+async function refreshRandom() {
+  const random = await store.loadRandom(RANDOM_COUNT);
+  randomArticles.value = random;
 }
 
-function shuffle(list: PromptualArticle[]) {
-  const result = [...list];
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-function refreshRandom() {
-  const source = articles.value.filter((article) => {
-    if (nsfwFilter.value === 'hide' && article.nsfw) {
-      return false;
-    }
-    if (nsfwFilter.value === 'only' && !article.nsfw) {
-      return false;
-    }
-    return true;
-  });
-  if (!source.length) {
-    randomArticles.value = [];
-    return;
-  }
-  randomArticles.value = shuffle(source).slice(0, RANDOM_COUNT);
-  shuffleKey.value += 1;
-}
-
-function onNsfwChange(event: CustomEvent) {
-  const value = event.detail.value as 'show' | 'hide' | 'only';
-  nsfwFilter.value = value;
-  saveNsfwFilter(value);
-  refreshRandom();
+function onToggleFavorite(articleId: string) {
+  store.toggleFavorite(articleId);
 }
 
 async function onRefresh(event: CustomEvent) {
-  await forceReload();
+  await refreshRandom();
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
 
+function goToTags() {
+  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
+}
+
+async function retryRandom() {
+  store.resetPagination();
+  await store.loadNextPage();
+  await refreshRandom();
+}
+
 watch(
-  articles,
-  (value) => {
-    if (value.length) {
+  () => store.articles.length,
+  (length) => {
+    if (length > 0 && randomArticles.value.length === 0) {
       refreshRandom();
     }
   },
   { immediate: true }
 );
 
-onMounted(() => {
-  loadAll();
+onMounted(async () => {
+  if (store.articles.length === 0) {
+    await store.loadNextPage();
+  }
 });
 </script>
 
 <style scoped>
-.page-section {
-  padding: 20px 20px 10px;
+.random-intro {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-md);
 }
 
-.page-kicker {
+.random-intro ion-button {
+  min-height: 40px;
   margin: 0;
-  font-family: Lora, georgia, serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: clamp(1.8rem, 5vw, 3rem);
-  line-height: 1.1;
-  letter-spacing: -0.035em;
-  color: var(--color--gray-5);
 }
 
-.random-header {
+.title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
-  animation: card-enter 0.35s ease-out both;
-  animation-delay: calc(var(--card-index, 0) * 70ms);
+.title-logo {
+  height: 32px;
+  width: auto;
 }
 
-.nsfw-section {
-  padding-top: 0;
-}
+@media (max-width: 480px) {
+  .random-intro {
+    grid-template-columns: 1fr;
+  }
 
-.skeleton-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.skeleton-item__frame {
-  aspect-ratio: 4 / 5;
-  background: var(--color--gray-90);
-  border: 2px solid var(--color--gray-20);
-}
-
-.skeleton-item__caption {
-  padding: 8px 0 0;
-  display: grid;
-  gap: 6px;
+  .random-intro ion-button {
+    justify-self: start;
+  }
 }
 </style>

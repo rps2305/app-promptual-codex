@@ -4,7 +4,7 @@
       <ion-toolbar>
         <ion-title>
           <span class="title-row">
-            <AppLogo />
+            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
             Tags
           </span>
         </ion-title>
@@ -16,415 +16,332 @@
       </ion-refresher>
       <ion-header collapse="condense">
         <ion-toolbar>
-          <ion-title size="large">Tags</ion-title>
+          <ion-title size="large">
+            <span class="title-row">
+              <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
+              Tags
+            </span>
+          </ion-title>
         </ion-toolbar>
       </ion-header>
 
-      <section class="page-section">
-        <p class="page-kicker">{{ filteredArticles.length }} results</p>
-        <ion-searchbar
-          :value="query"
-          :debounce="300"
-          placeholder="Search by title, prompt, or tag…"
-          aria-label="Search images by title, prompt, or tag"
-          @ionInput="onSearchInput"
-          @ionChange="onSearchInput"
-          @ionClear="onSearchClear"
-          class="tags-search"
-        ></ion-searchbar>
+      <section class="page-intro">
+        <p class="page-eyebrow">Search</p>
+        <h1 class="page-heading">Find a style, subject, or prompt</h1>
+        <p class="page-copy">Search the words in titles and prompts, or narrow the gallery with tags.</p>
       </section>
 
-      <section class="tag-section" v-if="tags.length">
-        <div class="tag-header">
-          <ion-button v-if="selectedTags.length" size="small" fill="clear" @click="clearTags">
-            Clear
+      <div class="section-pad">
+        <SearchBar
+          :query="uiStore.query"
+          :recent-searches="uiStore.recentSearches"
+          @update:query="onSearch"
+          @search="onSearchSubmit"
+          @clear-history="uiStore.clearRecentSearches"
+        />
+      </div>
+
+      <div class="section-pad">
+        <TagFilter
+          v-if="articlesStore.articles.length > 0"
+          :tags="getAllTags()"
+          :selected-tag-ids="uiStore.selectedTagIds"
+          @toggle-tag="uiStore.toggleTag"
+          @clear-all="uiStore.clearAllFilters"
+        />
+      </div>
+
+      <section class="search-meta section-pad">
+        <ion-text v-if="showResultCount" class="result-count">{{ resultSummary }}</ion-text>
+      </section>
+
+      <ErrorState
+        v-if="searchError"
+        :error="searchError"
+        title="Search is unavailable"
+        message="Check your connection, then try searching the gallery again."
+        :on-retry="performSearch"
+      />
+
+      <section v-else-if="showInitialState" class="empty-state section-pad">
+        <h2>Start with any word</h2>
+        <p>Try a subject, visual style, model name, or a tag from the gallery.</p>
+        <div class="suggestion-list" aria-label="Search suggestions">
+          <ion-button
+            v-for="suggestion in starterSearches"
+            :key="suggestion"
+            size="small"
+            fill="outline"
+            @click="applyStarterSearch(suggestion)"
+          >
+            {{ suggestion }}
           </ion-button>
         </div>
-        <div class="tag-list">
-          <button
-            v-for="tag in tagOptions"
-            :key="tag.id"
-            type="button"
-            class="tag-filter"
-            :class="{ 'tag-filter--selected': isSelected(tag.id) }"
-            :aria-pressed="isSelected(tag.id)"
-            @click="toggleTag(tag.id)"
-          >
-            {{ tag.name }}
-          </button>
-          <ion-button
-            v-if="!showAllTags && tags.length > tagOptions.length"
-            size="small"
-            fill="clear"
-            @click="showAllTags = true"
-          >
-            Show all
-          </ion-button>
-          <ion-button
-            v-if="showAllTags"
-            size="small"
-            fill="clear"
-            @click="showAllTags = false"
-          >
-            Show less
-          </ion-button>
-        </div>
       </section>
 
-      <section class="page-section">
-        <ion-segment :value="nsfwFilter" @ionChange="onNsfwChange">
-          <ion-segment-button value="show" title="Display all images regardless of content rating">
-            <ion-label>All</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="hide" title="Filter out images flagged as Not Safe For Work (NSFW)">
-            <ion-label>Safe</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="only" title="Show only images flagged as Not Safe For Work (NSFW)">
-            <ion-label>NSFW</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </section>
-
-      <section class="page-section">
-        <ion-text v-if="error" color="danger">{{ error }}</ion-text>
-        <ion-button v-if="error" size="small" fill="clear" @click="forceReload">
-          Try again
+      <section v-else-if="showNoMatches" class="empty-state section-pad">
+        <h2>No matches found</h2>
+        <p>Try fewer words, remove a tag, or clear all filters.</p>
+        <ion-button fill="outline" size="small" @click="uiStore.clearAllFilters">
+          Clear filters
         </ion-button>
       </section>
 
-      <ion-grid>
+      <ion-grid v-else>
         <ion-row>
           <ion-col
-            v-for="(article, index) in visibleArticles"
+            v-for="article in filteredArticles"
             :key="article.id"
             size="12"
             size-md="6"
-            size-lg="3"
-            :style="{ '--card-index': index }"
+            size-lg="4"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ImageCard :article="article" compact />
+              <ArticleCard :article="article" />
             </router-link>
           </ion-col>
 
-          <template v-if="loading && !articles.length">
+          <template v-if="uiStore.isLoading && !filteredArticles.length">
             <ion-col
-              v-for="index in 8"
+              v-for="index in 6"
               :key="`skeleton-${index}`"
               size="12"
               size-md="6"
-              size-lg="3"
+              size-lg="4"
             >
-              <div class="skeleton-item">
-                <div class="skeleton-item__frame skeleton-item__frame--compact">
-                  <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
-                </div>
-                <div class="skeleton-item__caption">
-                  <ion-skeleton-text animated style="width: 60%; height: 12px; display: block" />
-                </div>
-              </div>
+              <LoadingSkeleton />
             </ion-col>
           </template>
-
-          <ion-col v-if="!loading && filteredArticles.length === 0" size="12">
-            <div class="empty-state">
-              <ion-icon :icon="searchOutline" class="empty-icon" />
-              <ion-text color="medium">
-                <p class="empty-text">Nothing matched</p>
-                <p class="empty-hint">Try a broader search, pick a different tag, or loosen the NSFW filter — there's plenty more to explore.</p>
-              </ion-text>
-            </div>
-          </ion-col>
         </ion-row>
       </ion-grid>
-
-      <ion-infinite-scroll :disabled="visibleCount >= filteredArticles.length" @ionInfinite="onInfinite">
-        <ion-infinite-scroll-content loading-spinner="crescent" />
-      </ion-infinite-scroll>
-
-      <ion-loading :is-open="loading" message="Searching images…" />
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, onUnmounted, watch } from 'vue';
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonButton,
   IonContent,
-  IonSearchbar,
   IonGrid,
   IonRow,
   IonCol,
-
-  IonSkeletonText,
   IonText,
-  IonLabel,
+  IonButton,
   IonRefresher,
   IonRefresherContent,
-  IonLoading,
-  IonSegment,
-  IonSegmentButton,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
-  IonIcon,
 } from '@ionic/vue';
-import { searchOutline } from 'ionicons/icons';
-import ImageCard from '@/components/ImageCard.vue';
-import AppLogo from '@/components/AppLogo.vue';
-import { usePromptualData } from '@/composables/usePromptualData';
-import type { PromptualTag } from '@/services/promptualApi';
+import { RouterLink } from 'vue-router';
+import SearchBar from '@/components/SearchBar.vue';
+import TagFilter from '@/components/TagFilter.vue';
+import ArticleCard from '@/components/ArticleCard.vue';
+import LoadingSkeleton from '@/components/LoadingSkeleton.vue';
+import ErrorState from '@/components/ErrorState.vue';
+import { useArticlesStore } from '@/stores/articles';
+import { useUiStore } from '@/stores/ui';
+import { searchArticles } from '@/api/articles';
+import type { Article, Tag } from '@/types';
 
-const { articles, tags, loading, error, loadAll, forceReload } = usePromptualData();
-const query = ref('');
-const selectedTags = ref<string[]>([]);
-const showAllTags = ref(false);
-const nsfwFilter = ref<'show' | 'hide' | 'only'>(localStorage.getItem('promptual:nsfwFilter') as 'show' | 'hide' | 'only' ?? 'hide');
+const articlesStore = useArticlesStore();
+const uiStore = useUiStore();
+const filteredArticles = ref<Article[]>([]);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let searchRequestId = 0;
+const starterSearches = ['portrait', 'forest', 'abstract'];
 
-function saveNsfwFilter(value: 'show' | 'hide' | 'only') {
-  localStorage.setItem('promptual:nsfwFilter', value);
+const showResultCount = computed(() => {
+  return uiStore.hasFilters || filteredArticles.value.length > 0;
+});
+
+const resultSummary = computed(() => {
+  const count = filteredArticles.value.length;
+  return `${count} ${count === 1 ? 'result' : 'results'}`;
+});
+
+const showInitialState = computed(() => {
+  return !uiStore.isLoading && !uiStore.hasFilters && filteredArticles.value.length === 0;
+});
+
+const showNoMatches = computed(() => {
+  return !uiStore.isLoading && uiStore.hasFilters && filteredArticles.value.length === 0;
+});
+
+const searchError = computed(() => {
+  return uiStore.error || articlesStore.error;
+});
+
+function getAllTags() {
+  const allTags = articlesStore.articles.reduce((acc: Tag[], article) => {
+    article.tags.forEach(tag => {
+      if (!acc.find(t => t.id === tag.id)) {
+        acc.push(tag);
+      }
+    });
+    return acc;
+  }, []);
+
+  return allTags.sort((a, b) => a.name.localeCompare(b.name));
 }
-const TAG_PREVIEW_LIMIT = 24;
 
-const usedTagIds = computed(() => {
-  const ids = new Set<string>();
-  for (const article of articles.value) {
-    for (const tag of article.tags) {
-      ids.add(tag.id);
+async function performSearch() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+
+  const requestId = ++searchRequestId;
+  uiStore.setLoading(true);
+  uiStore.setError(null);
+
+  try {
+    if (articlesStore.articles.length === 0) {
+      await articlesStore.loadNextPage();
+    }
+
+    const results = await searchArticles({
+      query: uiStore.query || undefined,
+      tagIds: uiStore.selectedTagIds.length > 0 ? uiStore.selectedTagIds : undefined
+    });
+
+    if (requestId === searchRequestId) {
+      filteredArticles.value = results;
+      uiStore.setFilteredArticles(results);
+    }
+  } catch (err) {
+    if (requestId === searchRequestId) {
+      uiStore.setError(err instanceof Error ? err.message : 'Search failed');
+      filteredArticles.value = [];
+    }
+  } finally {
+    if (requestId === searchRequestId) {
+      uiStore.setLoading(false);
     }
   }
-  return ids;
-});
-
-const usedModels = computed(() => {
-  const map = new Map<string, PromptualTag>();
-  for (const article of articles.value) {
-    if (article.model && !map.has(article.model.id)) {
-      map.set(article.model.id, article.model);
-    }
-  }
-  return [...map.values()];
-});
-
-const tagOptions = computed(() => {
-  const allTags = [...tags.value, ...usedModels.value]
-    .filter((tag) => usedTagIds.value.has(tag.id));
-  const unique = allTags.filter(
-    (tag, index, self) => self.findIndex((t) => t.id === tag.id) === index
-  );
-  const sorted = unique.sort((a, b) => a.name.localeCompare(b.name));
-  return showAllTags.value ? sorted : sorted.slice(0, TAG_PREVIEW_LIMIT);
-});
-
-const filteredArticles = computed(() => {
-  const normalizedQuery = String(query.value ?? '').trim().toLowerCase();
-  const hasTagFilter = selectedTags.value.length > 0;
-  const nsfwMode = nsfwFilter.value;
-
-  return articles.value.filter((article) => {
-    const tagNames = article.tags.map((tag) => tag.name.toLowerCase());
-    const matchesTagFilter = !hasTagFilter
-      ? true
-      : article.tags.some((tag) => selectedTags.value.includes(tag.id));
-
-    const matchesQuery = !normalizedQuery
-      ? true
-      : article.title.toLowerCase().includes(normalizedQuery) ||
-        article.prompt.toLowerCase().includes(normalizedQuery) ||
-        tagNames.some((name) => name.includes(normalizedQuery));
-
-    const matchesNsfw = nsfwMode === 'show'
-      ? true
-      : nsfwMode === 'hide'
-        ? !article.nsfw
-        : article.nsfw;
-
-    return matchesTagFilter && matchesQuery && matchesNsfw;
-  });
-});
-
-const PAGE_SIZE = 24;
-const visibleCount = ref(PAGE_SIZE);
-const visibleArticles = computed(() => filteredArticles.value.slice(0, visibleCount.value));
-
-function onNsfwChange(event: CustomEvent) {
-  const value = event.detail.value as 'show' | 'hide' | 'only';
-  nsfwFilter.value = value;
-  saveNsfwFilter(value);
 }
 
-function onInfinite(event: CustomEvent) {
-  visibleCount.value = Math.min(visibleCount.value + PAGE_SIZE, filteredArticles.value.length);
-  const target = event.target as { complete?: () => void };
-  target.complete?.();
+function onSearch(value: string) {
+  uiStore.setQuery(value);
 }
 
-watch([query, selectedTags, nsfwFilter], () => {
-  visibleCount.value = PAGE_SIZE;
-});
-
-watch(articles, () => {
-  visibleCount.value = Math.min(visibleCount.value, articles.value.length || PAGE_SIZE);
-});
-
-function toggleTag(tagId: string) {
-  if (selectedTags.value.includes(tagId)) {
-    selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
-    return;
-  }
-  selectedTags.value = [...selectedTags.value, tagId];
+function onSearchSubmit(value: string) {
+  uiStore.addRecentSearch(value);
+  performSearch();
 }
 
-function isSelected(tagId: string) {
-  return selectedTags.value.includes(tagId);
-}
-
-function clearTags() {
-  selectedTags.value = [];
-}
-
-function onSearchInput(event: CustomEvent) {
-  const detail = event.detail as { value?: string | null };
-  query.value = detail?.value ?? '';
-}
-
-function onSearchClear() {
-  query.value = '';
+function applyStarterSearch(value: string) {
+  uiStore.setQuery(value);
+  uiStore.addRecentSearch(value);
+  performSearch();
 }
 
 async function onRefresh(event: CustomEvent) {
-  await forceReload();
+  await performSearch();
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
 
-onMounted(() => {
-  loadAll();
+function debouncedSearch() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+  debounceTimer = setTimeout(() => {
+    if (uiStore.query || uiStore.selectedTagIds.length > 0) {
+      performSearch();
+    } else {
+      filteredArticles.value = [];
+    }
+  }, 300);
+}
+
+watch(
+  () => [uiStore.query, uiStore.selectedTagIds.join(',')],
+  debouncedSearch
+);
+
+onUnmounted(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+});
+
+onMounted(async () => {
+  await articlesStore.loadNextPage();
+  uiStore.loadFromUrlParams();
+
+  if (uiStore.query || uiStore.selectedTagIds.length > 0) {
+    await performSearch();
+  }
 });
 </script>
 
 <style scoped>
-.page-section {
-  padding: 24px 20px 10px;
+.search-meta {
+  padding-top: var(--space-md);
 }
 
-.page-kicker {
-  margin: 0 0 4px;
-  font-family: Lora, georgia, serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: clamp(1.4rem, 4vw, 2.4rem);
-  line-height: 1.15;
-  letter-spacing: -0.035em;
+.result-count {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-md);
+}
+
+.empty-state {
+  display: grid;
+  gap: var(--space-xs);
+  max-width: 520px;
+  padding-top: var(--space-lg);
+  color: var(--text-muted);
+}
+
+.empty-state h2 {
+  margin: 0;
   color: var(--color--gray-5);
+  font-family: Lora, georgia, serif;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
 }
 
-.tag-section {
-  padding: 0 20px 12px;
+.empty-state p {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.tag-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
+.empty-state ion-button {
+  justify-self: start;
+  margin-top: var(--space-xs);
 }
 
-.tag-list {
+.suggestion-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
 }
 
-.tag-filter {
-  min-height: 44px;
-  padding: 8px 14px;
-  border: 1px solid var(--color--gray-85);
-  border-radius: 999px;
-  color: var(--color--gray-20);
-  background: var(--color--gray-100);
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  touch-action: manipulation;
+.suggestion-list ion-button {
+  margin: 0;
+  min-height: 36px;
 }
 
-.tag-filter--selected {
-  border-color: var(--color--primary-50);
-  color: var(--color--on-accent);
-  background: var(--color--primary-50);
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.tag-filter:focus-visible {
-  outline: 3px solid var(--color--focus-ring);
-  outline-offset: 3px;
-}
-
-.tags-search {
-  margin-bottom: 12px;
-  padding: 0;
+.title-logo {
+  height: 32px;
+  width: auto;
 }
 
 .card-link {
   text-decoration: none;
   display: block;
   height: 100%;
-  animation: card-enter 0.4s ease-out both;
-  animation-delay: calc(var(--card-index, 0) * 40ms);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 20px;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 2.5rem;
-  margin-bottom: 16px;
-  opacity: 0.55;
-  color: var(--color--gray-45);
-}
-
-.empty-text {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-}
-
-.empty-hint {
-  font-size: 0.875rem;
-  margin: 0;
-  opacity: 0.7;
-  max-width: 320px;
-}
-
-.skeleton-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.skeleton-item__frame--compact {
-  aspect-ratio: 3 / 4;
-}
-
-.skeleton-item__frame {
-  aspect-ratio: 4 / 5;
-  background: var(--color--gray-90);
-  border: 2px solid var(--color--gray-20);
-}
-
-.skeleton-item__caption {
-  padding: 8px 0 0;
-  display: grid;
-  gap: 6px;
 }
 </style>

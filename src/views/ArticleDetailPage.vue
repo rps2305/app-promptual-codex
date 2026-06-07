@@ -7,152 +7,186 @@
         </ion-buttons>
         <ion-title>
           <span class="title-row">
-            <AppLogo />
+            <img class="title-logo" src="/promptual-logo.png" alt="Promptual logo" />
             {{ article?.title ?? 'Artwork' }}
           </span>
         </ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="goToTags">
+            <ion-icon slot="icon-only" :icon="searchOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">{{ article?.title ?? 'Artwork' }}</ion-title>
-        </ion-toolbar>
-      </ion-header>
       <ion-refresher slot="fixed" @ionRefresh="onRefresh">
         <ion-refresher-content pulling-text="Pull to refresh" refreshing-spinner="crescent" />
       </ion-refresher>
       <section class="detail-hero" v-if="article">
-        <div class="detail-hero__media" :style="heroStyle">
-          <img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
-          <div v-else class="detail-hero__placeholder">Image unavailable</div>
-        </div>
-        <div class="detail-hero__bar">
-          <h1 class="detail-hero__title">{{ article.title }}</h1>
-          <div class="detail-hero__tags">
-            <span v-if="article.nsfw" class="detail-hero__tag detail-hero__tag--nsfw">NSFW</span>
-            <span v-for="tag in article.tags" :key="tag.id" class="detail-hero__tag">{{ tag.name }}</span>
-          </div>
-          <p class="detail-hero__date">{{ formattedDate }}</p>
-          <div class="detail-hero__actions">
-            <button class="detail-hero__action" @click="shareImage">
-              <ion-icon :icon="shareSocialOutline" />
-              Share
-            </button>
-            <button v-if="!isIos" class="detail-hero__action detail-hero__action--primary" @click="saveToPhotos">
-              <ion-icon :icon="downloadOutline" />
-              Save
-            </button>
-            <span v-else class="detail-ios-hint">Save via Share</span>
-          </div>
-        </div>
-      </section>
-
-      <section v-else class="detail-loading">
-        <div class="skeleton-item">
-          <div class="skeleton-item__frame">
-            <ion-skeleton-text animated style="height: 100%; width: 100%; display: block" />
-          </div>
-          <div class="skeleton-item__caption">
-            <ion-skeleton-text animated style="width: 75%; height: 22px; display: block" />
-            <ion-skeleton-text animated style="width: 50%; height: 14px; display: block" />
-            <ion-skeleton-text animated style="width: 90%; height: 14px; display: block" />
-          </div>
-        </div>
-      </section>
-
-      <section v-if="article" class="detail-section detail-prompt-section">
-        <h3 class="detail-section-title">Full Prompt</h3>
-        <p class="detail-prompt">{{ displayPrompt || 'No prompt' }}</p>
-        <p v-if="article.negativePrompt" class="detail-negative">
-          <strong>Negative prompt:</strong> {{ article.negativePrompt }}
-        </p>
-      </section>
-
-      <section v-if="article" class="detail-section detail-meta-section">
-        <h3 class="detail-section-title">Metadata</h3>
-        <dl class="detail-metadata">
-          <div class="detail-meta-row">
-            <dt>Model</dt>
-            <dd>{{ article.model?.name ?? 'Unknown' }}</dd>
-          </div>
-          <div class="detail-meta-row">
-            <dt>Resolution</dt>
-            <dd>
-              {{ article.imageWidth && article.imageHeight ? `${article.imageWidth} × ${article.imageHeight}` : 'Unknown' }}
-            </dd>
-          </div>
-          <div class="detail-meta-row">
-            <dt>Steps</dt>
-            <dd>{{ article.steps ?? 'Unknown' }}</dd>
-          </div>
-          <div class="detail-meta-row">
-            <dt>CFG Scale</dt>
-            <dd>{{ article.guidanceScale ?? 'Unknown' }}</dd>
-          </div>
-          <div class="detail-meta-row">
-            <dt>Seed</dt>
-            <dd>{{ article.seed ?? 'Unknown' }}</dd>
-          </div>
-        </dl>
-        <ion-button
-          v-if="article.path"
-          class="detail-original-link"
-          size="small"
-          fill="outline"
-          :href="article.path"
-          target="_blank"
-          rel="noopener"
+        <div
+          class="detail-hero__media"
+          :style="heroStyle"
+          role="button"
+          tabindex="0"
+          aria-label="Open image viewer"
+          @click="openImageViewer"
+          @keyup.enter="openImageViewer"
+          @keyup.space.prevent="openImageViewer"
         >
-          View original post
-        </ion-button>
+          <ion-img v-if="article.imageUrl" :src="article.imageUrl" :alt="article.title" />
+          <div v-else class="detail-hero__placeholder">No image</div>
+        </div>
+        <div class="detail-hero__meta">
+          <p class="detail-kicker">{{ formattedDate }}</p>
+          <div class="detail-tags">
+            <ion-chip v-if="article.nsfw" color="danger">
+              <ion-label class="detail-tag-label">NSFW</ion-label>
+            </ion-chip>
+            <ion-chip v-for="tag in article.tags" :key="tag.id">
+              <ion-label class="detail-tag-label">{{ tag.name }}</ion-label>
+            </ion-chip>
+          </div>
+          <div class="detail-actions">
+            <ion-button size="small" fill="outline" @click="toggleFavorite">
+              <ion-icon slot="start" :icon="article.isFavorite ? heart : heartOutline" />
+              {{ article.isFavorite ? 'Saved' : 'Save' }}
+            </ion-button>
+            <ion-button size="small" fill="outline" @click="shareImage">
+              <ion-icon slot="start" :icon="shareSocialOutline" />
+              Share
+            </ion-button>
+            <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
+              <ion-icon slot="start" :icon="downloadOutline" />
+              Save image
+            </ion-button>
+          </div>
+        </div>
       </section>
 
-      <section v-if="error" class="detail-section">
-        <ion-text color="danger">{{ error }}</ion-text>
+      <section v-else-if="loading" class="detail-loading">
+        <ion-skeleton-text animated style="height: 240px" />
+        <ion-skeleton-text animated style="width: 60%" />
+        <ion-skeleton-text animated style="width: 90%" />
       </section>
 
-      <ion-loading :is-open="loading" message="Loading image…" />
+      <section v-if="article" class="detail-section">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Prompt</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
+            <p v-if="article.negativePrompt" class="detail-negative">
+              <strong>Negative prompt:</strong> {{ article.negativePrompt }}
+            </p>
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+      <section v-if="article" class="detail-section">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Generation details</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <dl class="detail-metadata">
+              <div>
+                <dt>Model</dt>
+                <dd>{{ article.model?.name ?? 'Unknown' }}</dd>
+              </div>
+              <div>
+                <dt>Resolution</dt>
+                <dd>
+                  {{ article.imageWidth && article.imageHeight ? `${article.imageWidth} × ${article.imageHeight}` : 'Unknown' }}
+                </dd>
+              </div>
+              <div>
+                <dt>Steps</dt>
+                <dd>{{ article.steps ?? 'Unknown' }}</dd>
+              </div>
+              <div>
+                <dt>Guidance</dt>
+                <dd>{{ article.guidanceScale ?? 'Unknown' }}</dd>
+              </div>
+              <div>
+                <dt>Seed</dt>
+                <dd>{{ article.seed ?? 'Unknown' }}</dd>
+              </div>
+            </dl>
+            <ion-button v-if="article.path" size="small" fill="outline" :href="article.path" target="_blank" rel="noopener">
+              View on Promptual
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+      <ErrorState
+        v-if="error && !loading"
+        :error="error"
+        title="Artwork did not load"
+        message="This image may be unavailable, or the connection may have dropped."
+        :on-retry="fetchArticle"
+        :on-back="goToGallery"
+      />
+
       <ion-toast :is-open="toastOpen" :message="toastMessage" duration="2000" @didDismiss="toastOpen = false" />
     </ion-content>
+
+    <ImageViewer
+      :is-open="imageViewerOpen"
+      :image-url="article?.imageUrl || null"
+      :title="article?.title || ''"
+      :prompt="article?.prompt || ''"
+      @close="closeImageViewer"
+    />
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
   IonContent,
+  IonImg,
   IonButtons,
   IonBackButton,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonChip,
   IonSkeletonText,
-  IonText,
   IonButton,
   IonIcon,
   IonRefresher,
   IonRefresherContent,
-  IonLoading,
   IonToast,
 } from '@ionic/vue';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
-import { downloadOutline, shareSocialOutline } from 'ionicons/icons';
-import { usePromptualData } from '@/composables/usePromptualData';
-import AppLogo from '@/components/AppLogo.vue';
+import { downloadOutline, searchOutline, shareSocialOutline, heart, heartOutline } from 'ionicons/icons';
+import ImageViewer from '@/components/ImageViewer.vue';
+import ErrorState from '@/components/ErrorState.vue';
+import { useArticlesStore } from '@/stores/articles';
 
 const route = useRoute();
-const { articles, error, loadAll, forceReload, loading } = usePromptualData();
+const router = useRouter();
+const articlesStore = useArticlesStore();
+
 const articleId = computed(() => route.params.id as string);
-const article = computed(() => articles.value.find((item) => item.id === articleId.value));
+const article = computed(() => articlesStore.favoritedArticles.find((item) => item.id === articleId.value));
+const loading = ref(false);
+const error = ref<string | null>(null);
 const actionMessage = ref('');
 const toastMessage = computed(() => actionMessage.value);
 const toastOpen = ref(false);
+const imageViewerOpen = ref(false);
 const isIos = computed(() => Capacitor.getPlatform() === 'ios');
 const isAndroid = computed(() => Capacitor.getPlatform() === 'android');
 
@@ -176,30 +210,47 @@ const heroStyle = computed(() => {
   return { aspectRatio: `${article.value.imageWidth} / ${article.value.imageHeight}` };
 });
 
-const displayPrompt = computed(() => {
-  const prompt = String(article.value?.prompt ?? '').trim();
-  const negativePrompt = String(article.value?.negativePrompt ?? '').trim();
-
-  if (!prompt || !negativePrompt) {
-    return prompt;
-  }
-
-  const markerIndex = prompt.toLowerCase().lastIndexOf('negative prompt:');
-  if (markerIndex === -1) {
-    return prompt;
-  }
-
-  return prompt.slice(0, markerIndex).trim();
-});
-
 function showToast(message: string) {
   actionMessage.value = message;
   toastOpen.value = true;
 }
 
+async function fetchArticle() {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    await articlesStore.loadArticle(articleId.value);
+    if (!article.value) {
+      error.value = 'Artwork not found';
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Artwork did not load';
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openImageViewer() {
+  if (article.value?.imageUrl) {
+    imageViewerOpen.value = true;
+  }
+}
+
+function closeImageViewer() {
+  imageViewerOpen.value = false;
+}
+
+function toggleFavorite() {
+  if (article.value) {
+    articlesStore.toggleFavorite(article.value.id);
+    showToast(article.value.isFavorite ? 'Removed from favorites' : 'Added to favorites');
+  }
+}
+
 async function fetchImageData() {
   if (!article.value?.imageUrl) {
-    throw new Error('No image to share.');
+    throw new Error('No image available.');
   }
   if (Capacitor.isNativePlatform()) {
     const response = await CapacitorHttp.request({
@@ -208,7 +259,7 @@ async function fetchImageData() {
       responseType: 'blob',
     });
     if (response.status < 200 || response.status >= 300) {
-      throw new Error('Could not download the image.');
+      throw new Error('Failed to download image.');
     }
     const contentTypeHeader = Object.entries(response.headers ?? {}).find(
       ([key]) => key.toLowerCase() === 'content-type'
@@ -219,13 +270,13 @@ async function fetchImageData() {
   }
   const response = await fetch(article.value.imageUrl);
   if (!response.ok) {
-    throw new Error('Could not download the image.');
+    throw new Error('Failed to download image.');
   }
   const blob = await response.blob();
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('Could not read the image.'));
+    reader.onerror = () => reject(new Error('Failed to read image.'));
     reader.readAsDataURL(blob);
   });
   return { dataUrl };
@@ -235,6 +286,7 @@ async function shareImage() {
   if (!article.value) {
     return;
   }
+
   try {
     if (Capacitor.isNativePlatform()) {
       const { dataUrl } = await fetchImageData();
@@ -248,27 +300,27 @@ async function shareImage() {
       const uri = (await Filesystem.getUri({ directory: Directory.Cache, path: fileName })).uri;
       await Share.share({
         title: article.value.title,
-        text: displayPrompt.value ? displayPrompt.value.slice(0, 140) : 'Promptual artwork',
+        text: article.value.prompt ? article.value.prompt.slice(0, 140) : 'Promptual artwork',
         files: [uri],
       });
     } else if (navigator.share) {
       await navigator.share({
         title: article.value.title,
-        text: displayPrompt.value ? displayPrompt.value.slice(0, 140) : 'Promptual artwork',
+        text: article.value.prompt ? article.value.prompt.slice(0, 140) : 'Promptual artwork',
         url: article.value.imageUrl ?? article.value.path ?? window.location.href,
       });
     } else if (article.value.imageUrl) {
       window.open(article.value.imageUrl, '_blank');
     }
-    showToast('Shared successfully');
+    showToast('Ready to share.');
   } catch (err) {
-    showToast(err instanceof Error ? err.message : 'Could not share this image.');
+    showToast(err instanceof Error ? err.message : 'Share failed.');
   }
 }
 
 async function saveToPhotos() {
   if (!article.value?.imageUrl) {
-    showToast('No image to save');
+    showToast('No image available.');
     return;
   }
   try {
@@ -291,256 +343,192 @@ async function saveToPhotos() {
         albumIdentifier,
         fileName: `promptual-${article.value.id}`,
       });
-      showToast('Saved to Photos');
+      showToast('Saved to Photos.');
       return;
     }
     const link = document.createElement('a');
     link.href = article.value.imageUrl;
     link.download = `${article.value.title}.png`;
     link.click();
-    showToast('Download started');
+    showToast('Download started.');
   } catch (err) {
-    showToast(err instanceof Error ? err.message : 'Could not save this image.');
+    showToast(err instanceof Error ? err.message : 'Save failed.');
   }
 }
 
+function goToTags() {
+  router.push({ path: '/tabs/tab2', query: { focus: 'search' } });
+}
+
+function goToGallery() {
+  router.push('/tabs/tab1');
+}
+
 async function onRefresh(event: CustomEvent) {
-  await forceReload();
+  await fetchArticle();
   const target = event.target as { complete?: () => void };
   target.complete?.();
 }
 
 onMounted(() => {
-  loadAll();
+  fetchArticle();
 });
 </script>
 
 <style scoped>
 .detail-hero {
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  padding: var(--space-md) var(--page-gutter) 0;
+  box-sizing: border-box;
 }
 
 .detail-hero__media {
-  position: relative;
+  border-radius: 12px;
   overflow: hidden;
-  background: var(--color--gray-90);
-  animation: hero-reveal 0.6s var(--ease-out-expo) both;
+  background: var(--surface-muted);
+  aspect-ratio: 4 / 5;
+  cursor: zoom-in;
+  border: 1px solid var(--border-subtle);
+  outline: none;
+}
+
+.detail-hero__media:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ion-color-primary) 30%, transparent);
 }
 
 .detail-hero__placeholder {
   display: grid;
   place-items: center;
-  min-height: 280px;
-  color: var(--color--gray-45);
+  min-height: 240px;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
-.detail-hero__title {
-  font-family: Lora, georgia, serif;
-  font-weight: 700;
-  font-size: clamp(1.45rem, 4vw, 2.2rem);
-  line-height: 1.2;
-  color: var(--color--gray-5);
-  margin: 0;
-  flex-basis: 100%;
+.detail-hero__meta {
+  margin-top: var(--space-md);
 }
 
-.detail-hero__bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-bottom: 2px solid var(--color--gray-85);
-}
-
-.detail-hero__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.detail-hero__tag {
-  font-size: 0.7rem;
-  font-weight: 700;
+.detail-kicker {
+  margin: 0 0 var(--space-xs);
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color--gray-20);
-  background: var(--color--gray-90);
-  padding: 3px 9px;
-  border: 1px solid var(--color--gray-85);
-  border-radius: 999px;
+  letter-spacing: 0;
+  color: var(--text-soft);
 }
 
-.detail-hero__tag--nsfw {
-  background: var(--color--red);
-  color: var(--color--on-accent);
-}
-
-.detail-hero__date {
-  font-size: 0.75rem;
-  color: var(--color--gray-45);
-  margin: 0;
-  margin-left: auto;
-}
-
-.detail-hero__actions {
+.detail-tags {
   display: flex;
-  gap: 6px;
-  width: 100%;
-  margin-top: 4px;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
-.detail-hero__action {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 44px;
-  min-width: 44px;
-  font-size: 0.8rem;
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.detail-actions ion-button {
+  min-height: 40px;
+  margin: 0;
+}
+
+.detail-tag-label {
   font-weight: 700;
-  color: var(--color--gray-5);
-  background: var(--color--gray-95);
-  border: none;
-  border-radius: 999px;
-  padding: 8px 14px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s ease;
+  font-size: 0.85rem;
 }
 
-.detail-hero__action:hover {
-  background: var(--color--gray-90);
+.detail-tags :deep(ion-chip) {
+  --background: var(--surface-muted);
+  --color: var(--text-muted);
+  min-height: 28px;
+  margin: 0;
+  border: 1px solid var(--border-subtle);
 }
 
-.detail-hero__action--primary {
-  background: var(--color--terracotta);
-  color: var(--color--on-accent);
-}
-
-.detail-hero__action:focus-visible {
-  outline: 3px solid var(--color--focus-ring);
-  outline-offset: 3px;
-}
-
-.detail-hero__action--primary:hover {
-  background: var(--color--terracotta-light);
-}
-
-.detail-ios-hint {
-  font-size: 0.75rem;
-  color: var(--color--gray-45);
-  display: inline-flex;
-  align-items: center;
+.detail-tags :deep(ion-chip[color='danger']) {
+  --background: var(--color--red);
+  --color: #ffffff;
 }
 
 .detail-section {
-  padding: 0 20px 20px;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  padding: var(--space-sm) var(--page-gutter) 0;
+  box-sizing: border-box;
 }
 
-.detail-prompt-section,
-.detail-meta-section {
-  background: var(--color--gray-100);
-  border: 2px solid var(--color--gray-85);
-  border-radius: 16px;
-  padding: 20px 24px;
+.detail-section ion-card {
   margin: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
-.detail-section-title {
+.detail-section :deep(ion-card-title) {
   font-family: Lora, georgia, serif;
-  font-weight: 700;
-  font-size: 1.1rem;
-  margin: 0 0 16px;
-  color: var(--color--gray-5);
-  letter-spacing: -0.01em;
-  padding-bottom: 12px;
-  border-bottom: 3px solid var(--color--terracotta-light);
+  font-size: 1.12rem;
+  line-height: 1.25;
 }
 
 .detail-prompt {
   white-space: pre-wrap;
-  line-height: 1.7;
-  color: var(--color--gray-20);
-  margin: 0;
-  font-size: 0.925rem;
+  line-height: 1.55;
+  color: var(--color--gray-5);
 }
 
 .detail-negative {
-  margin-top: 14px;
-  color: var(--color--red);
-  font-size: 0.85rem;
-  line-height: 1.5;
+  margin-top: var(--space-sm);
+  color: color-mix(in srgb, var(--color--red) 72%, var(--color--gray-5));
 }
 
 .detail-metadata {
   display: grid;
-  gap: 0;
-  margin: 0;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
 }
 
-.detail-meta-row {
+.detail-metadata div {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 2px solid var(--color--gray-85);
-}
-
-.detail-meta-row:last-child {
-  border-bottom: none;
 }
 
 .detail-metadata dt {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color--gray-45);
-  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 .detail-metadata dd {
   margin: 0;
-  font-size: 0.875rem;
   color: var(--color--gray-5);
   text-align: right;
-  font-family: Lora, georgia, serif;
-  word-break: break-all;
-}
-
-.detail-original-link {
-  --border-color: var(--color--terracotta);
-  --color: var(--color--terracotta);
-  --color-hover: var(--color--terracotta-light);
-  --background-hover: var(--color--gray-95);
-  --ripple-color: var(--color--terracotta-light);
-  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .detail-loading {
-  padding: 0;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  padding: var(--space-md) var(--page-gutter);
   display: grid;
-  gap: 0;
+  gap: var(--space-sm);
+  box-sizing: border-box;
 }
 
-.detail-loading .skeleton-item {
+.title-row {
   display: flex;
-  flex-direction: column;
-}
-
-.detail-loading .skeleton-item__frame {
-  aspect-ratio: auto;
-  height: 320px;
-  background: var(--color--gray-95);
-  border: none;
-}
-
-.detail-loading .skeleton-item__caption {
-  padding: 20px;
-  display: grid;
+  align-items: center;
   gap: 10px;
+}
+
+.title-logo {
+  height: 32px;
+  width: auto;
 }
 </style>

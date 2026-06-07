@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
+import pinia from './stores';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -33,6 +34,8 @@ import '@ionic/vue/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import { useArticlesStore } from './stores/articles';
+import { useUiStore } from './stores/ui';
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations()
@@ -44,7 +47,13 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 const app = createApp(App)
   .use(IonicVue)
-  .use(router);
+  .use(router)
+  .use(pinia);
+
+if (typeof window !== 'undefined') {
+  useArticlesStore(pinia).loadFavorites();
+  useUiStore(pinia).loadRecentSearches();
+}
 
 router.isReady().then(() => {
   app.mount('#app');

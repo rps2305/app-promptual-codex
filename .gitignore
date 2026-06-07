@@ -30,3 +30,11 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+.env
+.env.local
+.env.*.local
+/.agents
+/.npm-cache
+/.npm-cache-node20
+/android
+/ios
