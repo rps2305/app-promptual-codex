@@ -7,6 +7,7 @@
         :to="`/tabs/tab1/${article.id}`"
         class="card-link"
         :class="{ 'card-link--featured': index === 0 && articles.length > 2 }"
+        @click="openArticle(article.id)"
       >
         <ArticleCard
           :article="article"
@@ -40,7 +41,7 @@
 
 <script setup lang="ts">
 import { IonInfiniteScroll, IonInfiniteScrollContent, IonButton } from '@ionic/vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import ArticleCard from './ArticleCard.vue';
 import LoadingSkeleton from './LoadingSkeleton.vue';
 import type { Article } from '../types';
@@ -53,6 +54,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const router = useRouter();
 
 const emit = defineEmits<{
   toggleFavorite: [articleId: string];
@@ -66,6 +68,10 @@ async function onLoadMore(event: CustomEvent) {
 
 function onToggleFavorite(articleId: string) {
   emit('toggleFavorite', articleId);
+}
+
+function openArticle(articleId: string) {
+  router.push(`/tabs/tab1/${articleId}`);
 }
 
 function scrollToTop() {
@@ -95,6 +101,8 @@ function scrollToTop() {
   height: 100%;
   color: inherit;
   min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 @media (min-width: 760px) {
