@@ -11,15 +11,22 @@ const DEFAULT_SITE_BASE_URL = 'https://promptual.puntuale.nl';
 
 function joinUrl(baseUrl: string | undefined, path: string): string {
   const configuredBase = baseUrl || DEFAULT_API_BASE_URL;
-  const resolvedBase = !import.meta.env.DEV && configuredBase.startsWith('/')
-    ? `${(import.meta.env.VITE_SITE_BASE_URL || DEFAULT_SITE_BASE_URL).replace(/\/+$/, '')}${configuredBase}`
-    : configuredBase;
+  const resolvedBase = resolveBaseUrl(configuredBase);
 
   if (/^https?:\/\//i.test(path)) {
     return path;
   }
 
   return `${resolvedBase.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+}
+
+function resolveBaseUrl(baseUrl: string): string {
+  if (import.meta.env.DEV || /^https?:\/\//i.test(baseUrl)) {
+    return baseUrl;
+  }
+
+  const siteBase = (import.meta.env.VITE_SITE_BASE_URL || DEFAULT_SITE_BASE_URL).replace(/\/+$/, '');
+  return `${siteBase}/${baseUrl.replace(/^\/+/, '')}`;
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -112,4 +119,4 @@ export async function get<T>(url: string): Promise<T> {
   }
 }
 
-export { retryWithBackoff, fetchWithTimeout, joinUrl };
+export { retryWithBackoff, fetchWithTimeout, joinUrl, resolveBaseUrl };

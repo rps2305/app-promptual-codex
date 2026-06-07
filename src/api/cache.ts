@@ -2,7 +2,7 @@ import { openDB, IDBPDatabase } from 'idb';
 import { CacheEntry, CacheError } from '../types';
 
 const DB_NAME = 'promptual-cache';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_ARTICLES = 'articles';
 const STORE_TAGS = 'tags';
 
@@ -39,6 +39,10 @@ async function getDB(): Promise<IDBPDatabase<unknown>> {
         }
       }
     });
+    db.addEventListener('versionchange', () => {
+      db?.close();
+      db = null;
+    });
     return db;
   } catch (error) {
     throw new CacheError('Failed to open IndexedDB', error instanceof Error ? error : undefined);
@@ -71,6 +75,10 @@ export async function get<T>(key: string): Promise<CacheEntry<T> | null> {
     }
 
     const database = await getDB();
+    if (!database.objectStoreNames.contains(storeName)) {
+      resetDBConnection();
+      return null;
+    }
     const stored = await database.get(storeName, key) as StoredCacheEntry<T> | undefined;
 
     if (!stored) {
@@ -106,6 +114,10 @@ export async function set<T>(key: string, data: T, options?: { page?: number; to
     } else {
       if (hasIndexedDB()) {
         const database = await getDB();
+        if (!database.objectStoreNames.contains(storeName)) {
+          resetDBConnection();
+          return;
+        }
         const stored: StoredCacheEntry<T> = {
           url: key,
           value: entry
@@ -116,7 +128,7 @@ export async function set<T>(key: string, data: T, options?: { page?: number; to
       }
     }
   } catch (error) {
-    throw new CacheError('Failed to write to cache', error instanceof Error ? error : undefined);
+    console.warn('Cache write skipped:', error);
   }
 }
 
@@ -173,4 +185,9 @@ export async function clear(pattern?: string | undefined): Promise<void> {
 
 export function isFresh(entry: CacheEntry<unknown>, ttl: number): boolean {
   return isEntryFresh(entry, ttl);
+}
+
+function resetDBConnection() {
+  db?.close();
+  db = null;
 }
