@@ -16,14 +16,16 @@ function normalizeQuery(value: string) {
 export const useUiStore = defineStore('ui', () => {
   const query = ref('');
   const selectedTagIds = ref<string[]>([]);
-  const nsfwFilter = ref<NsfwFilter>('all');
+  const DEFAULT_NSFW_FILTER: NsfwFilter = 'safe';
+
+  const nsfwFilter = ref<NsfwFilter>(DEFAULT_NSFW_FILTER);
   const recentSearches = ref<string[]>([]);
   const filteredArticles = ref<Article[]>([]);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   const hasFilters = computed(() => {
-    return query.value.length > 0 || selectedTagIds.value.length > 0 || nsfwFilter.value !== 'all';
+    return query.value.length > 0 || selectedTagIds.value.length > 0 || nsfwFilter.value !== DEFAULT_NSFW_FILTER;
   });
 
   function setQuery(value: string) {
@@ -37,7 +39,7 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   function setNsfwFilter(value: NsfwFilter) {
-    nsfwFilter.value = NSFW_FILTERS.has(value) ? value : 'all';
+    nsfwFilter.value = NSFW_FILTERS.has(value) ? value : DEFAULT_NSFW_FILTER;
     updateUrlParams();
   }
 
@@ -54,7 +56,7 @@ export const useUiStore = defineStore('ui', () => {
   function clearAllFilters() {
     query.value = '';
     selectedTagIds.value = [];
-    nsfwFilter.value = 'all';
+    nsfwFilter.value = DEFAULT_NSFW_FILTER;
     updateUrlParams();
   }
 
@@ -128,7 +130,7 @@ export const useUiStore = defineStore('ui', () => {
       currentQuery.delete('tags');
     }
 
-    if (nsfwFilter.value !== 'all') {
+    if (nsfwFilter.value !== DEFAULT_NSFW_FILTER) {
       currentQuery.set('nsfw', nsfwFilter.value);
     } else {
       currentQuery.delete('nsfw');
