@@ -75,6 +75,7 @@
             <ion-card-title>Prompt</ion-card-title>
           </ion-card-header>
           <ion-card-content>
+            <CopyPromptButton v-if="article.prompt" :text="article.prompt" />
             <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
             <p v-if="article.negativePrompt" class="detail-negative">
               <strong>Negative prompt:</strong> {{ article.negativePrompt }}
@@ -172,6 +173,7 @@ import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Media } from '@capacitor-community/media';
 import { downloadOutline, searchOutline, shareSocialOutline, heart, heartOutline } from 'ionicons/icons';
+import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import { useArticlesStore } from '@/stores/articles';
@@ -475,6 +477,11 @@ onMounted(() => {
   font-family: Lora, georgia, serif;
   font-size: 1.12rem;
   line-height: 1.25;
+}
+
+.detail-prompt, .detail-negative {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .detail-prompt {

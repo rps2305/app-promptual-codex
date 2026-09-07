@@ -41,12 +41,14 @@
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
         <ion-text v-if="prompt" class="image-prompt">{{ prompt }}</ion-text>
+        <CopyPromptButton v-if="prompt" :text="prompt" class="viewer-copy" />
       </div>
     </ion-content>
   </ion-modal>
 </template>
 
 <script setup lang="ts">
+import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import {
   IonModal,
@@ -282,7 +284,14 @@ watch(
   margin-bottom: 8px;
 }
 
+.viewer-copy {
+  color: var(--viewer-text-muted);
+  justify-content: center;
+}
+
 .image-prompt {
+  -webkit-user-select: text;
+  user-select: text;
   display: block;
   font-size: 0.875rem;
   color: var(--viewer-text-muted);
