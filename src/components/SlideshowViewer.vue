@@ -3,6 +3,7 @@
     <div
       class="slideshow"
       @pointerdown="onPointerDown"
+      @pointermove="wake"
       @pointerup="onPointerUp"
       @pointercancel="startPoint = null"
     >
@@ -15,7 +16,7 @@
         draggable="false"
       />
 
-      <div class="slideshow__top">
+      <div class="slideshow__top" :class="{ 'slideshow__controls--dim': isDimmed }">
         <button type="button" class="slideshow__close" aria-label="Close slide show" @click="emit('close')">
           <ion-icon aria-hidden="true" :icon="closeOutline" />
         </button>
@@ -24,7 +25,7 @@
 
       <p v-if="message" class="slideshow__message" role="status">{{ message }}</p>
 
-      <div class="slideshow__bottom">
+      <div class="slideshow__bottom" :class="{ 'slideshow__controls--dim': isDimmed }">
         <p v-if="article" class="slideshow__title">{{ article.title }}</p>
         <div class="slideshow__actions">
           <button type="button" class="slideshow__action" :disabled="isBusy" @click="emit('next', 'safe')">
@@ -36,14 +37,13 @@
             <ion-icon aria-hidden="true" :icon="arrowForwardOutline" />
           </button>
         </div>
-        <p class="slideshow__hint">Swipe left for a safe image, right for an NSFW image.</p>
       </div>
     </div>
   </ion-modal>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { IonIcon, IonModal } from '@ionic/vue';
 import { arrowBackOutline, arrowForwardOutline, closeOutline } from 'ionicons/icons';
 import { swipeDirection, type SlideKind } from '@/composables/useSlideshow';
@@ -61,9 +61,22 @@ const emit = defineEmits<{
   next: [kind: SlideKind];
 }>();
 
+const DIM_AFTER_MS = 3000;
+
 const startPoint = ref<{ x: number; y: number } | null>(null);
+const isDimmed = ref(false);
+let dimTimer: ReturnType<typeof setTimeout> | undefined;
+
+function wake() {
+  isDimmed.value = false;
+  clearTimeout(dimTimer);
+  if (props.isOpen) {
+    dimTimer = setTimeout(() => { isDimmed.value = true; }, DIM_AFTER_MS);
+  }
+}
 
 function onPointerDown(event: PointerEvent) {
+  wake();
   startPoint.value = { x: event.clientX, y: event.clientY };
 }
 
@@ -80,7 +93,11 @@ function onPointerUp(event: PointerEvent) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (!props.isOpen || props.isBusy) {
+  if (!props.isOpen) {
+    return;
+  }
+  wake();
+  if (props.isBusy) {
     return;
   }
   if (event.key === 'ArrowLeft') {
@@ -92,8 +109,13 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+watch(() => [props.isOpen, props.article?.id], wake);
+
 onMounted(() => window.addEventListener('keydown', onKeydown));
-onUnmounted(() => window.removeEventListener('keydown', onKeydown));
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+  clearTimeout(dimTimer);
+});
 </script>
 
 <style scoped>
@@ -105,10 +127,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 
 .slideshow {
   position: relative;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--viewer-background);
   color: var(--viewer-text);
   touch-action: pan-y;
@@ -116,8 +138,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 }
 
 .slideshow__image {
-  max-width: 100%;
-  max-height: 100%;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   animation: slide-in 0.25s ease-out;
 }
@@ -177,6 +201,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 .slideshow__message {
   position: absolute;
   top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   margin: 0;
   padding: 8px 14px;
   border-radius: 8px;
@@ -209,10 +235,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
   gap: var(--space-sm);
 }
 
-.slideshow__hint {
-  margin: 0;
-  color: var(--viewer-text-muted);
-  font-size: 0.82rem;
+.slideshow__top,
+.slideshow__bottom {
+  transition: opacity 0.6s ease;
+}
+
+.slideshow__controls--dim {
+  opacity: 0.2;
 }
 
 @keyframes slide-in {
@@ -223,6 +252,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 @media (prefers-reduced-motion: reduce) {
   .slideshow__image {
     animation: none;
+  }
+
+  .slideshow__top,
+  .slideshow__bottom {
+    transition: none;
   }
 }
 </style>

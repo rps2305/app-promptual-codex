@@ -91,14 +91,14 @@
       <ion-grid v-else>
         <ion-row>
           <ion-col
-            v-for="article in filteredArticles"
+            v-for="article in displayedArticles"
             :key="article.id"
             size="12"
             size-md="6"
             size-lg="4"
           >
             <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ArticleCard :article="article" />
+              <ArticleCard :article="article" @toggle-favorite="onToggleFavorite" />
             </router-link>
           </ion-col>
 
@@ -152,6 +152,14 @@ const filteredArticles = ref<Article[]>([]);
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let searchRequestId = 0;
 const starterSearches = ['portrait', 'forest', 'abstract'];
+
+const displayedArticles = computed(() => {
+  const favoriteIds = new Set(articlesStore.favoriteIds);
+  return filteredArticles.value.map(article => ({
+    ...article,
+    isFavorite: favoriteIds.has(article.id)
+  }));
+});
 
 const showResultCount = computed(() => {
   return uiStore.hasFilters || filteredArticles.value.length > 0;
@@ -222,6 +230,11 @@ async function performSearch() {
       uiStore.setLoading(false);
     }
   }
+}
+
+function onToggleFavorite(articleId: string) {
+  const article = filteredArticles.value.find(item => item.id === articleId);
+  articlesStore.toggleFavorite(articleId, article);
 }
 
 function onSearch(value: string) {

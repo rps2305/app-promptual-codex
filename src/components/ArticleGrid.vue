@@ -1,27 +1,38 @@
 <template>
-  <section class="article-grid-wrap">
-    <div class="article-grid">
-      <router-link
+  <ion-grid>
+    <ion-row>
+      <ion-col
         v-for="article in articles"
         :key="article.id"
-        :to="`/tabs/tab1/${article.id}`"
-        class="card-link"
-        @click="openArticle(article.id)"
+        size="12"
+        size-md="6"
+        size-lg="4"
       >
-        <ArticleCard
-          :article="article"
-          @toggle-favorite="onToggleFavorite"
-        />
-      </router-link>
+        <router-link
+          :to="`/tabs/tab1/${article.id}`"
+          class="card-link"
+          @click="openArticle(article.id)"
+        >
+          <ArticleCard
+            :article="article"
+            @toggle-favorite="onToggleFavorite"
+          />
+        </router-link>
+      </ion-col>
 
       <template v-if="isLoading">
-        <LoadingSkeleton
+        <ion-col
           v-for="index in 6"
           :key="`skeleton-${index}`"
-        />
+          size="12"
+          size-md="6"
+          size-lg="4"
+        >
+          <LoadingSkeleton />
+        </ion-col>
       </template>
-    </div>
-  </section>
+    </ion-row>
+  </ion-grid>
 
   <ion-infinite-scroll
     v-if="hasMore && !isLoading"
@@ -38,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonInfiniteScroll, IonInfiniteScrollContent, IonButton } from '@ionic/vue';
+import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow } from '@ionic/vue';
 import { RouterLink, useRouter } from 'vue-router';
 import ArticleCard from './ArticleCard.vue';
 import LoadingSkeleton from './LoadingSkeleton.vue';
@@ -87,21 +98,6 @@ function scrollToTop() {
 </script>
 
 <style scoped>
-.article-grid-wrap {
-  width: 100%;
-  max-width: var(--content-max);
-  margin-inline: auto;
-  padding: var(--space-md) var(--page-gutter) var(--space-xl);
-  box-sizing: border-box;
-}
-
-.article-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: var(--space-lg);
-  align-items: stretch;
-}
-
 .card-link {
   text-decoration: none;
   display: block;

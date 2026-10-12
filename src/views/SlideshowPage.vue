@@ -160,8 +160,7 @@ onMounted(() => showNext('safe'));
 .slideshow-preview__button {
   display: block;
   width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
@@ -190,7 +189,6 @@ onMounted(() => showNext('safe'));
 }
 
 .slideshow-preview__start {
-  max-width: 420px;
-  margin: var(--space-md) auto 0;
+  margin: var(--space-md) 0 0;
 }
 </style>

@@ -140,21 +140,24 @@ export const useArticlesStore = defineStore('articles', () => {
     return randomWithFavorites;
   }
 
-  function toggleFavorite(articleId: string) {
-    if (favorites.value.has(articleId)) {
-      favorites.value.delete(articleId);
-    } else {
+  function toggleFavorite(articleId: string, candidate?: Article) {
+    const isFavorite = !favorites.value.has(articleId);
+    if (isFavorite) {
       favorites.value.add(articleId);
+    } else {
+      favorites.value.delete(articleId);
     }
 
     const article = articles.value.find(a => a.id === articleId);
     if (article) {
-      article.isFavorite = favorites.value.has(articleId);
-      if (favorites.value.has(articleId)) {
-        favoriteSnapshots.value[articleId] = { ...article, isFavorite: true };
-      } else {
-        delete favoriteSnapshots.value[articleId];
-      }
+      article.isFavorite = isFavorite;
+    }
+
+    const source = article ?? candidate ?? favoriteSnapshots.value[articleId];
+    if (isFavorite && source) {
+      favoriteSnapshots.value[articleId] = { ...source, isFavorite: true };
+    } else if (!isFavorite) {
+      delete favoriteSnapshots.value[articleId];
     }
 
     persistFavorites();
