@@ -95,7 +95,7 @@ const router = useRouter();
 const store = useArticlesStore();
 const uiStore = useUiStore();
 const randomArticles = ref<Article[]>([]);
-const RANDOM_COUNT = 8;
+const RANDOM_COUNT = 12;
 const RANDOM_SAMPLE_COUNT = 32;
 
 async function refreshRandom() {

@@ -54,17 +54,6 @@
 - Example usage: `ionic-local serve`
 - Run npm scripts from `ionic-codex/promptual`; if you are in `ionic-codex/`, use `./ionic-serve.sh`.
 
-## CloudPanel Deployment (promptual-app.puntuale.nl)
-- Create a new site in CloudPanel as a Node.js app.
-- Set the domain to `promptual-app.puntuale.nl`.
-- Set the app root to the repo root and the public root to `dist/` (Vite output).
-- Set the Node.js version to match the project (LTS recommended).
-- Build the app on the server:
-  - `npm ci`
-  - `npm run build`
-- If using CloudPanel Git deployment hooks, run `npm ci` and `npm run build` in the deploy script so `dist/` stays current.
-- Ensure HTTPS is enabled in CloudPanel for the domain.
-
 ## Performance & UX Requirements
 - Avoid unnecessary re-renders and keep list rendering virtualized or paginated when needed.
 - Cache API responses for tags and articles to minimize repeated fetches.

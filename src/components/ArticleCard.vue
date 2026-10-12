@@ -66,7 +66,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showPrompt: true,
+  showPrompt: false,
   showFavorite: true
 });
 
@@ -74,7 +74,7 @@ const emit = defineEmits<{
   toggleFavorite: [articleId: string];
 }>();
 
-const showPrompt = computed(() => props.showPrompt ?? true);
+const showPrompt = computed(() => props.showPrompt ?? false);
 const imageFailed = ref(false);
 
 const promptSnippet = computed(() => {

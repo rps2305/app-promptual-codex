@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Promptual</title>
+  <rect width="512" height="512" fill="#8c3a28"/>
+  <rect x="96" y="96" width="320" height="320" rx="38" fill="#f2efe9"/>
+  <rect x="120" y="120" width="272" height="272" rx="20" fill="#8c3a28"/>
+  <path d="M120 392 L120 392 L206 270 L262 340 L304 288 L392 392 Z" fill="#f2efe9"/>
+  <path d="M320 144 Q326 200 382 206 Q326 212 320 268 Q314 212 258 206 Q314 200 320 144 Z" fill="#fdca40" transform="translate(-16 -10) scale(1)"/>
+</svg>

@@ -122,7 +122,7 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   }
 
-  async function loadRandom(count: number = 8): Promise<Article[]> {
+  async function loadRandom(count: number = 12): Promise<Article[]> {
     const random = await getRandomArticles(count);
     const existingIds = new Set(articles.value.map(article => article.id));
     const randomWithFavorites = random.map(article => ({
