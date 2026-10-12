@@ -39,3 +39,6 @@ npm-debug.log*
 /.npm-cache-node20
 /android
 /ios
+
+# Impeccable engine binary (downloaded on first run)
+.claude/skills/impeccable/scripts/bin/
