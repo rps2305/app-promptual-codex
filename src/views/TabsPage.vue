@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { IonIcon, IonPage, IonRouterOutlet } from '@ionic/vue';
-import { imagesOutline, pricetagsOutline, shuffleOutline, heartOutline } from 'ionicons/icons';
+import { imagesOutline, pricetagsOutline, shuffleOutline, playOutline, heartOutline } from 'ionicons/icons';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -30,6 +30,7 @@ const tabs = [
   { path: '/tabs/tab1', label: 'Gallery', icon: imagesOutline },
   { path: '/tabs/tab2', label: 'Tags', icon: pricetagsOutline },
   { path: '/tabs/tab3', label: 'Random', icon: shuffleOutline },
+  { path: '/tabs/slideshow', label: 'Slide show', icon: playOutline },
   { path: '/tabs/favorites', label: 'Favorites', icon: heartOutline },
 ];
 const currentPath = computed(() => route.path);
@@ -56,7 +57,7 @@ function goToTab(path: string) {
   left: 0;
   z-index: 1000;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   min-height: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
@@ -93,6 +94,12 @@ function goToTab(path: string) {
 .app-tab-nav__button:focus-visible {
   outline: 3px solid var(--color--focus-ring);
   outline-offset: -5px;
+}
+
+@media (max-width: 420px) {
+  .app-tab-nav__button {
+    font-size: 0.75rem;
+  }
 }
 
 .app-tab-nav__button span {
