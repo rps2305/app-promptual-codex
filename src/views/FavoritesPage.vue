@@ -26,7 +26,6 @@
       </ion-header>
 
       <section class="page-intro">
-        <p class="page-eyebrow">Favorites</p>
         <h1 class="page-heading">Images you saved</h1>
         <p class="page-copy">Keep the ideas worth coming back to.</p>
       </section>

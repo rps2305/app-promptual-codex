@@ -62,7 +62,7 @@ function goToTab(path: string) {
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
   border-top: 1px solid var(--color--gray-95);
-  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-nav);
 }
 
 .app-tab-nav__button {

@@ -13,7 +13,6 @@
     <ion-content :fullscreen="true">
       <section class="page-intro">
         <div>
-          <p class="page-eyebrow">Slide show</p>
           <h1 class="page-heading">Swipe through random images</h1>
           <p class="page-copy">Open an image full screen, then swipe to keep going.</p>
         </div>

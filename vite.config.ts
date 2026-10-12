@@ -27,6 +27,7 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,woff2}'],
+        globIgnores: ['**/*-legacy-*.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/promptual\.puntuale\.nl\/jsonapi\//,

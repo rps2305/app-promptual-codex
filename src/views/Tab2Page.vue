@@ -26,7 +26,6 @@
       </ion-header>
 
       <section class="page-intro">
-        <p class="page-eyebrow">Search</p>
         <h1 class="page-heading">Find a style, subject, or prompt</h1>
         <p class="page-copy">Search the words in titles and prompts, or narrow the gallery with tags.</p>
       </section>
@@ -97,9 +96,11 @@
             size-md="6"
             size-lg="4"
           >
-            <router-link :to="`/tabs/tab1/${article.id}`" class="card-link">
-              <ArticleCard :article="article" @toggle-favorite="onToggleFavorite" />
-            </router-link>
+            <ArticleCard
+              :article="article"
+              :to="`/tabs/tab1/${article.id}`"
+              @toggle-favorite="onToggleFavorite"
+            />
           </ion-col>
 
           <template v-if="uiStore.isLoading && !filteredArticles.length">
@@ -135,7 +136,6 @@ import {
   IonRefresher,
   IonRefresherContent,
 } from '@ionic/vue';
-import { RouterLink } from 'vue-router';
 import SearchBar from '@/components/SearchBar.vue';
 import TagFilter from '@/components/TagFilter.vue';
 import ArticleCard from '@/components/ArticleCard.vue';
@@ -353,11 +353,5 @@ onMounted(async () => {
 .title-logo {
   height: 32px;
   width: 32px;
-}
-
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
 }
 </style>

@@ -4,6 +4,7 @@
       class="slideshow"
       @pointerdown="onPointerDown"
       @pointermove="wake"
+      @focusin="wake"
       @pointerup="onPointerUp"
       @pointercancel="startPoint = null"
     >
@@ -241,7 +242,7 @@ onUnmounted(() => {
 }
 
 .slideshow__controls--dim {
-  opacity: 0.2;
+  opacity: 0.45;
 }
 
 @keyframes slide-in {

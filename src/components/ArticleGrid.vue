@@ -8,16 +8,11 @@
         size-md="6"
         size-lg="4"
       >
-        <router-link
+        <ArticleCard
+          :article="article"
           :to="`/tabs/tab1/${article.id}`"
-          class="card-link"
-          @click="openArticle(article.id)"
-        >
-          <ArticleCard
-            :article="article"
-            @toggle-favorite="onToggleFavorite"
-          />
-        </router-link>
+          @toggle-favorite="onToggleFavorite"
+        />
       </ion-col>
 
       <template v-if="isLoading">
@@ -50,7 +45,6 @@
 
 <script setup lang="ts">
 import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow } from '@ionic/vue';
-import { RouterLink, useRouter } from 'vue-router';
 import ArticleCard from './ArticleCard.vue';
 import LoadingSkeleton from './LoadingSkeleton.vue';
 import type { Article } from '../types';
@@ -63,7 +57,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const router = useRouter();
 
 const emit = defineEmits<{
   toggleFavorite: [articleId: string];
@@ -77,10 +70,6 @@ async function onLoadMore(event: CustomEvent) {
 
 function onToggleFavorite(articleId: string) {
   emit('toggleFavorite', articleId);
-}
-
-function openArticle(articleId: string) {
-  router.push(`/tabs/tab1/${articleId}`);
 }
 
 function scrollToTop() {
@@ -98,18 +87,6 @@ function scrollToTop() {
 </script>
 
 <style scoped>
-.card-link {
-  text-decoration: none;
-  display: block;
-  height: 100%;
-  color: inherit;
-  min-width: 0;
-  cursor: pointer;
-  touch-action: manipulation;
-  content-visibility: auto;
-  contain-intrinsic-size: 520px;
-}
-
 .end-message {
   text-align: center;
   padding: var(--space-xl) var(--page-gutter) calc(var(--space-2xl) + env(safe-area-inset-bottom));

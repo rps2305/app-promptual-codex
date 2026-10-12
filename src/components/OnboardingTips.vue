@@ -1,7 +1,6 @@
 <template>
   <section v-if="isVisible" class="onboarding-tips" aria-label="Getting started">
     <div class="onboarding-tips__copy">
-      <p class="onboarding-tips__eyebrow">New here?</p>
       <h2>Start by opening one image.</h2>
       <p>Look around, search in everyday words, then tap the heart on anything worth saving.</p>
     </div>
@@ -70,15 +69,6 @@ function goToSearch() {
 
 .onboarding-tips__copy {
   min-width: 0;
-}
-
-.onboarding-tips__eyebrow {
-  margin: 0 0 var(--space-2xs);
-  color: var(--text-soft);
-  font-size: 0.76rem;
-  font-weight: 700;
-  line-height: 1rem;
-  text-transform: uppercase;
 }
 
 .onboarding-tips h2 {

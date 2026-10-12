@@ -1,5 +1,10 @@
 <template>
   <ion-card class="article-card">
+    <component
+      :is="to ? RouterLink : 'div'"
+      v-bind="to ? { to } : {}"
+      class="article-card__link"
+    >
     <div class="article-card__media" :style="mediaStyle">
       <ion-img
         v-if="article.imageUrl && !imageFailed"
@@ -29,6 +34,7 @@
         </ion-chip>
       </div>
     </ion-card-content>
+    </component>
     <ion-button
       v-if="showFavorite"
       fill="clear"
@@ -57,10 +63,12 @@ import {
   IonButton
 } from '@ionic/vue';
 import { heart, heartOutline, imageOutline } from 'ionicons/icons';
+import { RouterLink } from 'vue-router';
 import type { Article } from '../types';
 
 interface Props {
   article: Article;
+  to?: string;
   showPrompt?: boolean;
   showFavorite?: boolean;
 }
@@ -118,8 +126,26 @@ function toggleFavorite(event: Event) {
   height: 100%;
   margin: 0;
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
   border: 1px solid var(--border-subtle);
   transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+}
+
+.article-card__link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.article-card__link:focus-visible {
+  outline: 3px solid var(--color--focus-ring);
+  outline-offset: -3px;
 }
 
 .article-card:hover {

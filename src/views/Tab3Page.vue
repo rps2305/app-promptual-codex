@@ -32,7 +32,6 @@
 
       <section class="page-intro random-intro">
         <div>
-          <p class="page-eyebrow">Random</p>
           <h1 class="page-heading">A fresh handful of images</h1>
           <p class="page-copy">For when browsing needs a little chance.</p>
         </div>

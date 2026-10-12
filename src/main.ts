@@ -46,7 +46,9 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 }
 
 const app = createApp(App)
-  .use(IonicVue)
+  .use(IonicVue, {
+    animated: typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  })
   .use(router)
   .use(pinia);
 

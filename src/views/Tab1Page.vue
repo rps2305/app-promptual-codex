@@ -31,7 +31,6 @@
       </ion-header>
 
       <section class="page-intro gallery-intro">
-        <p class="page-eyebrow">Gallery</p>
         <h1 class="page-heading">Browse recent AI images</h1>
         <p class="page-copy">A calm place to look around, open an image, and save what catches your eye.</p>
       </section>
