@@ -29,9 +29,9 @@
         class="image-viewer-container"
         @click="onContainerClick"
         @dblclick="resetZoom"
-        @pointerdown="onPointerDown"
-        @pointerup="onPointerUp"
-        @pointercancel="swipeStart = null"
+        @touchstart.passive="swipe.onTouchStart"
+        @touchend="onContainerTouchEnd"
+        @touchcancel="swipe.cancel"
       >
         <div
           class="image-viewer-image-wrapper"
@@ -78,6 +78,7 @@ import {
   IonFooter,
   IonText
 } from '@ionic/vue';
+import { createSwipeTracker } from '@/utils/swipe';
 import {
   closeOutline,
   addOutline,
@@ -104,9 +105,11 @@ const emit = defineEmits<{
   detail: [];
 }>();
 
-const SWIPE_MIN_DISTANCE = 60;
-const swipeStart = ref<{ x: number; y: number } | null>(null);
 let swiped = false;
+const swipe = createSwipeTracker((direction) => {
+  if (direction === 'left' && props.hasNext) emit('next');
+  if (direction === 'right' && props.hasPrev) emit('prev');
+});
 
 const zoomLevel = ref(1);
 const minZoom = 1;
@@ -212,21 +215,15 @@ function onTouchEnd() {
   lastTouchDistance.value = 0;
 }
 
-function onPointerDown(event: PointerEvent) {
-  swipeStart.value = { x: event.clientX, y: event.clientY };
-  swiped = false;
-}
-
-function onPointerUp(event: PointerEvent) {
-  const start = swipeStart.value;
-  swipeStart.value = null;
-  if (!start || zoomLevel.value > 1) return;
-  const dx = event.clientX - start.x;
-  const dy = event.clientY - start.y;
-  if (Math.abs(dx) >= SWIPE_MIN_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5) {
+function onContainerTouchEnd(event: TouchEvent) {
+  if (zoomLevel.value > 1) {
+    swipe.cancel();
+    return;
+  }
+  if (swipe.onTouchEnd(event)) {
     swiped = true;
-    if (dx < 0 && props.hasNext) emit('next');
-    if (dx > 0 && props.hasPrev) emit('prev');
+    // Stop the browser from turning the swipe into a click that toggles zoom.
+    event.preventDefault();
   }
 }
 

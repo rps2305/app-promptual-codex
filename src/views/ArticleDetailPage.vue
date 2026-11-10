@@ -18,7 +18,7 @@
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content :fullscreen="true">
+    <ion-content :fullscreen="true" @touchstart.passive="pageSwipe.onTouchStart" @touchend="pageSwipe.onTouchEnd" @touchcancel="pageSwipe.cancel">
       <ion-refresher slot="fixed" @ionRefresh="onRefresh">
         <ion-refresher-content pulling-text="Pull to refresh" refreshing-spinner="crescent" />
       </ion-refresher>
@@ -182,6 +182,7 @@ import ImageViewer from '@/components/ImageViewer.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import { useArticlesStore } from '@/stores/articles';
 import { useUiStore } from '@/stores/ui';
+import { createSwipeTracker } from '@/utils/swipe';
 
 const route = useRoute();
 const router = useRouter();
@@ -258,6 +259,11 @@ function openImageViewer() {
     imageViewerOpen.value = true;
   }
 }
+
+const pageSwipe = createSwipeTracker((direction) => {
+  if (imageViewerOpen.value) return;
+  void goToNeighbor(direction === 'left' ? nextArticle.value : prevArticle.value);
+});
 
 async function goToNeighbor(target: { id: string } | null) {
   if (target) {
