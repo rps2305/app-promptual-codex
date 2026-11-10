@@ -29,9 +29,6 @@
         class="image-viewer-container"
         @click="onContainerClick"
         @dblclick="resetZoom"
-        @touchstart.passive="swipe.onTouchStart"
-        @touchend="onContainerTouchEnd"
-        @touchcancel="swipe.cancel"
       >
         <div
           class="image-viewer-image-wrapper"
@@ -209,15 +206,23 @@ function onTouchEnd() {
   lastTouchDistance.value = 0;
 }
 
-function onContainerTouchEnd(event: TouchEvent) {
-  if (zoomLevel.value > 1) {
+function onWindowTouchStart(event: TouchEvent) {
+  if (!props.isOpen || zoomLevel.value > 1) {
+    swipe.cancel();
+    return;
+  }
+  swiped = false;
+  swipe.onTouchStart(event);
+}
+
+function onWindowTouchEnd(event: TouchEvent) {
+  if (!props.isOpen || zoomLevel.value > 1) {
     swipe.cancel();
     return;
   }
   if (swipe.onTouchEnd(event)) {
+    // Remember the swipe so the click that may follow does not toggle zoom.
     swiped = true;
-    // Stop the browser from turning the swipe into a click that toggles zoom.
-    event.preventDefault();
   }
 }
 
@@ -264,10 +269,16 @@ function handleKeydown(event: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('touchstart', onWindowTouchStart, { passive: true });
+  window.addEventListener('touchend', onWindowTouchEnd, { passive: true });
+  window.addEventListener('touchcancel', swipe.cancel, { passive: true });
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('touchstart', onWindowTouchStart);
+  window.removeEventListener('touchend', onWindowTouchEnd);
+  window.removeEventListener('touchcancel', swipe.cancel);
 });
 
 const propsWatch = props;
@@ -313,6 +324,9 @@ watch(
 }
 
 .image-viewer-image {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
