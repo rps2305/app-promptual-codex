@@ -135,20 +135,19 @@
 
     <ImageViewer
       :is-open="imageViewerOpen"
-      :image-url="article?.imageUrl || null"
-      :title="article?.title || ''"
-      :has-prev="!!prevArticle"
-      :has-next="!!nextArticle"
+      :image-url="viewerArticle?.imageUrl || null"
+      :title="viewerArticle?.title || ''"
+      :has-prev="!!viewerPrev"
+      :has-next="!!viewerNext || articlesStore.hasMore"
       @close="closeImageViewer"
-      @prev="goToNeighbor(prevArticle)"
-      @next="goToNeighbor(nextArticle)"
-      @detail="closeImageViewer"
+      @prev="stepViewer(viewerPrev)"
+      @next="stepViewerNext"
     />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   IonPage,
@@ -197,13 +196,19 @@ const galleryArticles = computed(() => {
   if (uiStore.nsfwFilter === 'nsfw') return all.filter((item) => item.nsfw);
   return all;
 });
-const currentIndex = computed(() => galleryArticles.value.findIndex((item) => item.id === articleId.value));
-const prevArticle = computed(() =>
-  currentIndex.value > 0 ? galleryArticles.value[currentIndex.value - 1] : null
+const viewerId = ref<string | null>(null);
+function neighborOf(id: string, step: 1 | -1) {
+  const index = galleryArticles.value.findIndex((item) => item.id === id);
+  return index >= 0 ? galleryArticles.value[index + step] ?? null : null;
+}
+const pageNext = computed(() => neighborOf(articleId.value, 1));
+const pagePrev = computed(() => neighborOf(articleId.value, -1));
+const viewerKey = computed(() => viewerId.value ?? articleId.value);
+const viewerArticle = computed(
+  () => galleryArticles.value.find((item) => item.id === viewerKey.value) ?? article.value ?? null
 );
-const nextArticle = computed(() =>
-  currentIndex.value >= 0 ? galleryArticles.value[currentIndex.value + 1] ?? null : null
-);
+const viewerNext = computed(() => neighborOf(viewerKey.value, 1));
+const viewerPrev = computed(() => neighborOf(viewerKey.value, -1));
 const loading = ref(false);
 const error = ref<string | null>(null);
 const actionMessage = ref('');
@@ -262,7 +267,7 @@ function openImageViewer() {
 
 const pageSwipe = createSwipeTracker((direction) => {
   if (imageViewerOpen.value) return;
-  void goToNeighbor(direction === 'left' ? nextArticle.value : prevArticle.value);
+  void goToNeighbor(direction === 'left' ? pageNext.value : pagePrev.value);
 });
 
 async function goToNeighbor(target: { id: string } | null) {
@@ -271,14 +276,26 @@ async function goToNeighbor(target: { id: string } | null) {
   }
 }
 
-watch(nextArticle, async (next) => {
-  if (imageViewerOpen.value && currentIndex.value >= 0 && !next && articlesStore.hasMore && !articlesStore.isLoading) {
+function stepViewer(target: { id: string } | null) {
+  if (target) {
+    viewerId.value = target.id;
+  }
+}
+
+async function stepViewerNext() {
+  if (!viewerNext.value && articlesStore.hasMore && !articlesStore.isLoading) {
     await articlesStore.loadNextPage();
   }
-});
+  stepViewer(viewerNext.value);
+}
 
-function closeImageViewer() {
+async function closeImageViewer() {
+  const target = viewerId.value;
   imageViewerOpen.value = false;
+  viewerId.value = null;
+  if (target && target !== articleId.value) {
+    await router.replace(`/tabs/tab1/${target}`);
+  }
 }
 
 function toggleFavorite() {

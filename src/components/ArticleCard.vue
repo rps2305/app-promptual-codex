@@ -5,7 +5,7 @@
       v-bind="to ? { to } : {}"
       class="article-card__link"
     >
-    <div class="article-card__media" :style="mediaStyle">
+    <div class="article-card__media" :style="mediaStyle" @click="onMediaClick">
       <ion-img
         v-if="article.imageUrl && !imageFailed"
         :src="article.imageUrl"
@@ -36,6 +36,17 @@
     </ion-card-content>
     </component>
     <ion-button
+      v-if="viewer && to"
+      fill="clear"
+      class="article-card__details"
+      color="medium"
+      :router-link="to"
+      :aria-label="`Go to details of ${article.title}`"
+      @click.stop
+    >
+      <ion-icon slot="icon-only" aria-hidden="true" :icon="informationCircleOutline" />
+    </ion-button>
+    <ion-button
       v-if="showFavorite"
       fill="clear"
       class="article-card__favorite"
@@ -62,7 +73,7 @@ import {
   IonIcon,
   IonButton
 } from '@ionic/vue';
-import { heart, heartOutline, imageOutline } from 'ionicons/icons';
+import { heart, heartOutline, imageOutline, informationCircleOutline } from 'ionicons/icons';
 import { RouterLink } from 'vue-router';
 import type { Article } from '../types';
 
@@ -71,15 +82,19 @@ interface Props {
   to?: string;
   showPrompt?: boolean;
   showFavorite?: boolean;
+  /** Tapping the image opens the full-screen viewer instead of the details page. */
+  viewer?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showPrompt: false,
-  showFavorite: true
+  showFavorite: true,
+  viewer: false
 });
 
 const emit = defineEmits<{
   toggleFavorite: [articleId: string];
+  view: [articleId: string];
 }>();
 
 const showPrompt = computed(() => props.showPrompt ?? false);
@@ -107,6 +122,15 @@ watch(() => props.article.imageUrl, () => {
 
 function onImageError() {
   imageFailed.value = true;
+}
+
+function onMediaClick(event: Event) {
+  if (!props.viewer || !props.article.imageUrl) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  emit('view', props.article.id);
 }
 
 function toggleFavorite(event: Event) {
@@ -251,6 +275,22 @@ function toggleFavorite(event: Event) {
   max-height: 60px;
   overflow: hidden;
   min-width: 0;
+}
+
+.article-card__details {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  width: 44px;
+  height: 44px;
+  --border-radius: 999px;
+  --background: color-mix(in srgb, var(--surface) 88%, transparent);
+  --background-hover: var(--surface);
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  backdrop-filter: blur(8px);
 }
 
 .article-card__favorite {

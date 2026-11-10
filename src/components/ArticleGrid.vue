@@ -11,7 +11,9 @@
         <ArticleCard
           :article="article"
           :to="`/tabs/tab1/${article.id}`"
+          viewer
           @toggle-favorite="onToggleFavorite"
+          @view="openViewer"
         />
       </ion-col>
 
@@ -29,6 +31,17 @@
     </ion-row>
   </ion-grid>
 
+  <ImageViewer
+    :is-open="viewerId !== null"
+    :image-url="viewerArticle?.imageUrl || null"
+    :title="viewerArticle?.title || ''"
+    :has-prev="viewerIndex > 0"
+    :has-next="viewerIndex >= 0 && (viewerIndex < articles.length - 1 || hasMore)"
+    @close="viewerId = null"
+    @prev="stepViewer(-1)"
+    @next="stepViewer(1)"
+  />
+
   <ion-infinite-scroll
     v-if="hasMore && !isLoading"
     @ionInfinite="onLoadMore"
@@ -45,7 +58,9 @@
 
 <script setup lang="ts">
 import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow } from '@ionic/vue';
+import { computed, ref } from 'vue';
 import ArticleCard from './ArticleCard.vue';
+import ImageViewer from './ImageViewer.vue';
 import LoadingSkeleton from './LoadingSkeleton.vue';
 import type { Article } from '../types';
 
@@ -61,6 +76,28 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   toggleFavorite: [articleId: string];
 }>();
+
+const viewerId = ref<string | null>(null);
+const viewerIndex = computed(() => props.articles.findIndex(item => item.id === viewerId.value));
+const viewerArticle = computed(() => props.articles[viewerIndex.value] ?? null);
+
+function openViewer(articleId: string) {
+  viewerId.value = articleId;
+}
+
+async function stepViewer(step: 1 | -1) {
+  const index = viewerIndex.value;
+  if (index < 0) {
+    return;
+  }
+  if (step === 1 && index === props.articles.length - 1 && props.hasMore && !props.isLoading) {
+    await props.loadMore();
+  }
+  const target = props.articles[index + step];
+  if (target) {
+    viewerId.value = target.id;
+  }
+}
 
 async function onLoadMore(event: CustomEvent) {
   await props.loadMore();

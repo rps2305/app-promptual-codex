@@ -55,10 +55,6 @@
     <ion-footer class="image-viewer-footer">
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
-        <ion-button size="default" fill="solid" color="light" class="viewer-details" aria-label="Go to the details page" @click="emit('detail')">
-          <ion-icon slot="start" aria-hidden="true" :icon="informationCircleOutline" />
-          Go to details
-        </ion-button>
       </div>
     </ion-footer>
   </ion-modal>
@@ -84,8 +80,7 @@ import {
   addOutline,
   removeOutline,
   chevronBackOutline,
-  chevronForwardOutline,
-  informationCircleOutline
+  chevronForwardOutline
 } from 'ionicons/icons';
 
 interface Props {
@@ -102,7 +97,6 @@ const emit = defineEmits<{
   close: [];
   prev: [];
   next: [];
-  detail: [];
 }>();
 
 let swiped = false;
@@ -340,10 +334,8 @@ watch(
   font-size: 1rem;
   font-weight: 600;
   color: var(--viewer-text);
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
-.viewer-details {
-  margin: 4px 0 0;
-}
+
 </style>
