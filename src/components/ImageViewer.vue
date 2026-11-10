@@ -51,14 +51,16 @@
         </div>
       </div>
 
+    </ion-content>
+    <ion-footer class="image-viewer-footer">
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
-        <ion-button size="default" fill="solid" color="light" class="viewer-details" aria-label="Go to the details page" @click.stop="emit('detail')">
+        <ion-button size="default" fill="solid" color="light" class="viewer-details" aria-label="Go to the details page" @click="emit('detail')">
           <ion-icon slot="start" aria-hidden="true" :icon="informationCircleOutline" />
           Go to details
         </ion-button>
       </div>
-    </ion-content>
+    </ion-footer>
   </ion-modal>
 </template>
 
@@ -73,6 +75,7 @@ import {
   IonIcon,
   IonTitle,
   IonContent,
+  IonFooter,
   IonText
 } from '@ionic/vue';
 import {
@@ -299,17 +302,15 @@ watch(
 
 .image-viewer-content {
   --background: var(--viewer-background);
-  display: flex;
-  flex-direction: column;
 }
 
 .image-viewer-container {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  position: relative;
   cursor: zoom-in;
   touch-action: none;
 }
@@ -327,15 +328,13 @@ watch(
   user-select: none;
 }
 
+.image-viewer-footer {
+  background: var(--viewer-background);
+}
+
 .image-viewer-info {
-  position: absolute;
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  left: 20px;
-  right: 20px;
-  z-index: 10;
   background: var(--viewer-overlay);
-  padding: 16px;
-  border-radius: 8px;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   text-align: center;
 }
 
