@@ -5,7 +5,7 @@ import { Article, PaginatedResponse, SearchOptions, ApiError } from '../types';
 
 const PAGE_LIMIT = parseInt(import.meta.env.VITE_ARTICLE_PAGE_LIMIT || '30');
 const CACHE_TTL = parseInt(import.meta.env.VITE_CACHE_TTL_MS || '1800000');
-const MAX_ARTICLES = parseInt(import.meta.env.VITE_MAX_ARTICLES || '2000');
+const MAX_ARTICLES = parseInt(import.meta.env.VITE_MAX_ARTICLES || '3000');
 const API_MAX_PAGE_LIMIT = 50;
 const RANDOM_PAGE_FETCH_LIMIT = 8;
 
