@@ -76,10 +76,7 @@
           </ion-card-header>
           <ion-card-content>
             <CopyPromptButton v-if="article.prompt" :text="article.prompt" />
-            <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
-            <p v-if="article.negativePrompt" class="detail-negative">
-              <strong>Negative prompt:</strong> {{ article.negativePrompt }}
-            </p>
+            <p v-else class="detail-prompt">No prompt available.</p>
           </ion-card-content>
         </ion-card>
       </section>
@@ -137,14 +134,18 @@
       :is-open="imageViewerOpen"
       :image-url="article?.imageUrl || null"
       :title="article?.title || ''"
-      :prompt="article?.prompt || ''"
+      :has-prev="!!prevArticle"
+      :has-next="!!nextArticle"
       @close="closeImageViewer"
+      @prev="goToNeighbor(prevArticle)"
+      @next="goToNeighbor(nextArticle)"
+      @detail="closeImageViewer"
     />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   IonPage,
@@ -177,13 +178,28 @@ import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import { useArticlesStore } from '@/stores/articles';
+import { useUiStore } from '@/stores/ui';
 
 const route = useRoute();
 const router = useRouter();
 const articlesStore = useArticlesStore();
+const uiStore = useUiStore();
 
 const articleId = computed(() => route.params.id as string);
 const article = computed(() => articlesStore.favoritedArticles.find((item) => item.id === articleId.value));
+const galleryArticles = computed(() => {
+  const all = articlesStore.favoritedArticles;
+  if (uiStore.nsfwFilter === 'safe') return all.filter((item) => !item.nsfw);
+  if (uiStore.nsfwFilter === 'nsfw') return all.filter((item) => item.nsfw);
+  return all;
+});
+const currentIndex = computed(() => galleryArticles.value.findIndex((item) => item.id === articleId.value));
+const prevArticle = computed(() =>
+  currentIndex.value > 0 ? galleryArticles.value[currentIndex.value - 1] : null
+);
+const nextArticle = computed(() =>
+  currentIndex.value >= 0 ? galleryArticles.value[currentIndex.value + 1] ?? null : null
+);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const actionMessage = ref('');
@@ -239,6 +255,18 @@ function openImageViewer() {
     imageViewerOpen.value = true;
   }
 }
+
+async function goToNeighbor(target: { id: string } | null) {
+  if (target) {
+    await router.replace(`/tabs/tab1/${target.id}`);
+  }
+}
+
+watch(nextArticle, async (next) => {
+  if (imageViewerOpen.value && currentIndex.value >= 0 && !next && articlesStore.hasMore && !articlesStore.isLoading) {
+    await articlesStore.loadNextPage();
+  }
+});
 
 function closeImageViewer() {
   imageViewerOpen.value = false;

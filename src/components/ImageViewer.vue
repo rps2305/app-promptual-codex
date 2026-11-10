@@ -9,6 +9,12 @@
         </ion-buttons>
         <ion-title>Image Viewer</ion-title>
         <ion-buttons slot="end">
+          <ion-button aria-label="Previous image" :disabled="!hasPrev" @click="emit('prev')">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="chevronBackOutline" />
+          </ion-button>
+          <ion-button aria-label="Next image" :disabled="!hasNext" @click="emit('next')">
+            <ion-icon slot="icon-only" aria-hidden="true" :icon="chevronForwardOutline" />
+          </ion-button>
           <ion-button aria-label="Zoom out" @click="zoomOut" :disabled="zoomLevel <= 1">
             <ion-icon slot="icon-only" aria-hidden="true" :icon="removeOutline" />
           </ion-button>
@@ -40,15 +46,16 @@
 
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
-        <ion-text v-if="prompt" class="image-prompt">{{ prompt }}</ion-text>
-        <CopyPromptButton v-if="prompt" :text="prompt" class="viewer-copy" />
+        <ion-button size="small" fill="outline" class="viewer-details" @click="emit('detail')">
+          <ion-icon slot="start" aria-hidden="true" :icon="informationCircleOutline" />
+          Details
+        </ion-button>
       </div>
     </ion-content>
   </ion-modal>
 </template>
 
 <script setup lang="ts">
-import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import {
   IonModal,
@@ -64,21 +71,32 @@ import {
 import {
   closeOutline,
   addOutline,
-  removeOutline
+  removeOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
+  informationCircleOutline
 } from 'ionicons/icons';
 
 interface Props {
   isOpen: boolean;
   imageUrl: string | null;
   title: string;
-  prompt?: string;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];
+  prev: [];
+  next: [];
+  detail: [];
 }>();
+
+const SWIPE_MIN_DISTANCE = 60;
+const touchStart = ref<{ x: number; y: number } | null>(null);
+const touchEnd = ref<{ x: number; y: number } | null>(null);
 
 const zoomLevel = ref(1);
 const minZoom = 1;
@@ -151,7 +169,9 @@ function onTouchStart(event: TouchEvent) {
   } else if (event.touches.length === 1) {
     const touch = event.touches[0];
     lastTouchPoint.value = { x: touch.clientX, y: touch.clientY };
-    isDragging.value = true;
+    touchStart.value = { x: touch.clientX, y: touch.clientY };
+    touchEnd.value = null;
+    isDragging.value = zoomLevel.value > 1;
   }
 }
 
@@ -165,9 +185,13 @@ function onTouchMove(event: TouchEvent) {
       zoomLevel.value = newZoom;
       lastTouchDistance.value = currentDistance;
     }
+  } else if (event.touches.length === 1 && !isDragging.value) {
+    const touch = event.touches[0];
+    touchEnd.value = { x: touch.clientX, y: touch.clientY };
   } else if (event.touches.length === 1 && isDragging.value && lastTouchPoint.value) {
     event.preventDefault();
     const touch = event.touches[0];
+    touchEnd.value = { x: touch.clientX, y: touch.clientY };
     const deltaX = touch.clientX - lastTouchPoint.value.x;
     const deltaY = touch.clientY - lastTouchPoint.value.y;
     position.value = {
@@ -179,6 +203,16 @@ function onTouchMove(event: TouchEvent) {
 }
 
 function onTouchEnd() {
+  if (zoomLevel.value === 1 && touchStart.value && touchEnd.value) {
+    const dx = touchEnd.value.x - touchStart.value.x;
+    const dy = touchEnd.value.y - touchStart.value.y;
+    if (Math.abs(dx) >= SWIPE_MIN_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0 && props.hasNext) emit('next');
+      if (dx > 0 && props.hasPrev) emit('prev');
+    }
+  }
+  touchStart.value = null;
+  touchEnd.value = null;
   isDragging.value = false;
   lastTouchPoint.value = null;
   lastTouchDistance.value = 0;
@@ -195,6 +229,12 @@ function handleKeydown(event: KeyboardEvent) {
   switch (event.key) {
     case 'Escape':
       onDismiss();
+      break;
+    case 'ArrowLeft':
+      if (props.hasPrev) emit('prev');
+      break;
+    case 'ArrowRight':
+      if (props.hasNext) emit('next');
       break;
     case '+':
     case '=':
@@ -220,6 +260,10 @@ onUnmounted(() => {
 });
 
 const propsWatch = props;
+watch(
+  () => propsWatch.imageUrl,
+  () => resetZoom()
+);
 watch(
   () => propsWatch.isOpen,
   (isOpen) => {
@@ -284,17 +328,7 @@ watch(
   margin-bottom: 8px;
 }
 
-.viewer-copy {
-  color: var(--viewer-text-muted);
-  justify-content: center;
-}
-
-.image-prompt {
-  -webkit-user-select: text;
-  user-select: text;
-  display: block;
-  font-size: 0.875rem;
-  color: var(--viewer-text-muted);
-  line-height: 1.4;
+.viewer-details {
+  --color: var(--viewer-text);
 }
 </style>
