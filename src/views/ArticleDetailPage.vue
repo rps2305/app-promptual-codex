@@ -76,7 +76,10 @@
           </ion-card-header>
           <ion-card-content>
             <CopyPromptButton v-if="article.prompt" :text="article.prompt" />
-            <p v-else class="detail-prompt">No prompt available.</p>
+            <p class="detail-prompt">{{ article.prompt || 'No prompt provided.' }}</p>
+            <p v-if="article.negativePrompt" class="detail-negative">
+              <strong>Negative prompt:</strong> {{ article.negativePrompt }}
+            </p>
           </ion-card-content>
         </ion-card>
       </section>

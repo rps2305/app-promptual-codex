@@ -25,7 +25,14 @@
       </ion-toolbar>
     </ion-header>
     <ion-content :fullscreen="true" class="image-viewer-content">
-      <div class="image-viewer-container" @click="toggleZoom" @dblclick="resetZoom">
+      <div
+        class="image-viewer-container"
+        @click="onContainerClick"
+        @dblclick="resetZoom"
+        @pointerdown="onPointerDown"
+        @pointerup="onPointerUp"
+        @pointercancel="swipeStart = null"
+      >
         <div
           class="image-viewer-image-wrapper"
           :style="transformStyle"
@@ -46,9 +53,9 @@
 
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
-        <ion-button size="small" fill="outline" class="viewer-details" @click="emit('detail')">
+        <ion-button size="default" fill="solid" color="light" class="viewer-details" aria-label="Go to the details page" @click.stop="emit('detail')">
           <ion-icon slot="start" aria-hidden="true" :icon="informationCircleOutline" />
-          Details
+          Go to details
         </ion-button>
       </div>
     </ion-content>
@@ -95,8 +102,8 @@ const emit = defineEmits<{
 }>();
 
 const SWIPE_MIN_DISTANCE = 60;
-const touchStart = ref<{ x: number; y: number } | null>(null);
-const touchEnd = ref<{ x: number; y: number } | null>(null);
+const swipeStart = ref<{ x: number; y: number } | null>(null);
+let swiped = false;
 
 const zoomLevel = ref(1);
 const minZoom = 1;
@@ -169,8 +176,6 @@ function onTouchStart(event: TouchEvent) {
   } else if (event.touches.length === 1) {
     const touch = event.touches[0];
     lastTouchPoint.value = { x: touch.clientX, y: touch.clientY };
-    touchStart.value = { x: touch.clientX, y: touch.clientY };
-    touchEnd.value = null;
     isDragging.value = zoomLevel.value > 1;
   }
 }
@@ -185,13 +190,9 @@ function onTouchMove(event: TouchEvent) {
       zoomLevel.value = newZoom;
       lastTouchDistance.value = currentDistance;
     }
-  } else if (event.touches.length === 1 && !isDragging.value) {
-    const touch = event.touches[0];
-    touchEnd.value = { x: touch.clientX, y: touch.clientY };
   } else if (event.touches.length === 1 && isDragging.value && lastTouchPoint.value) {
     event.preventDefault();
     const touch = event.touches[0];
-    touchEnd.value = { x: touch.clientX, y: touch.clientY };
     const deltaX = touch.clientX - lastTouchPoint.value.x;
     const deltaY = touch.clientY - lastTouchPoint.value.y;
     position.value = {
@@ -203,19 +204,35 @@ function onTouchMove(event: TouchEvent) {
 }
 
 function onTouchEnd() {
-  if (zoomLevel.value === 1 && touchStart.value && touchEnd.value) {
-    const dx = touchEnd.value.x - touchStart.value.x;
-    const dy = touchEnd.value.y - touchStart.value.y;
-    if (Math.abs(dx) >= SWIPE_MIN_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx < 0 && props.hasNext) emit('next');
-      if (dx > 0 && props.hasPrev) emit('prev');
-    }
-  }
-  touchStart.value = null;
-  touchEnd.value = null;
   isDragging.value = false;
   lastTouchPoint.value = null;
   lastTouchDistance.value = 0;
+}
+
+function onPointerDown(event: PointerEvent) {
+  swipeStart.value = { x: event.clientX, y: event.clientY };
+  swiped = false;
+}
+
+function onPointerUp(event: PointerEvent) {
+  const start = swipeStart.value;
+  swipeStart.value = null;
+  if (!start || zoomLevel.value > 1) return;
+  const dx = event.clientX - start.x;
+  const dy = event.clientY - start.y;
+  if (Math.abs(dx) >= SWIPE_MIN_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    swiped = true;
+    if (dx < 0 && props.hasNext) emit('next');
+    if (dx > 0 && props.hasPrev) emit('prev');
+  }
+}
+
+function onContainerClick() {
+  if (swiped) {
+    swiped = false;
+    return;
+  }
+  toggleZoom();
 }
 
 function onDismiss() {
@@ -294,6 +311,7 @@ watch(
   overflow: hidden;
   position: relative;
   cursor: zoom-in;
+  touch-action: none;
 }
 
 .image-viewer-image-wrapper {
@@ -311,9 +329,10 @@ watch(
 
 .image-viewer-info {
   position: absolute;
-  bottom: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
   left: 20px;
   right: 20px;
+  z-index: 10;
   background: var(--viewer-overlay);
   padding: 16px;
   border-radius: 8px;
@@ -329,6 +348,6 @@ watch(
 }
 
 .viewer-details {
-  --color: var(--viewer-text);
+  margin: 4px 0 0;
 }
 </style>
