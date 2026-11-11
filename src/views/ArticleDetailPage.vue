@@ -55,6 +55,7 @@
               <ion-icon slot="start" aria-hidden="true" :icon="shareSocialOutline" />
               Share
             </ion-button>
+            <NsfwFlagButton :article-id="article.id" :nsfw="article.nsfw" @done="showToast" />
             <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
               <ion-icon slot="start" aria-hidden="true" :icon="downloadOutline" />
               Save image
@@ -137,6 +138,9 @@
       :is-open="imageViewerOpen"
       :image-url="viewerArticle?.imageUrl || null"
       :title="viewerArticle?.title || ''"
+      :article-id="viewerArticle?.id"
+      :nsfw="viewerArticle?.nsfw"
+      @flag-result="showToast"
       :has-prev="!!viewerPrev"
       :has-next="!!viewerNext || articlesStore.hasMore"
       @close="closeImageViewer"
@@ -179,6 +183,7 @@ import { downloadOutline, searchOutline, shareSocialOutline, heart, heartOutline
 import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import ErrorState from '@/components/ErrorState.vue';
+import NsfwFlagButton from '@/components/NsfwFlagButton.vue';
 import { useArticlesStore } from '@/stores/articles';
 import { useUiStore } from '@/stores/ui';
 import { createSwipeTracker } from '@/utils/swipe';

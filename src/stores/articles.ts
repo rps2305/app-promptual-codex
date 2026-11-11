@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { getRandomArticles, getArticles, getArticleById } from '../api/articles';
+import { getRandomArticles, getArticles, getArticleById, updateArticleNsfw, SessionExpiredError } from '../api/articles';
+import { useAuthStore } from './auth';
 import type { Article } from '../types';
 
 const FAVORITES_KEY = 'promptual:favorites';
@@ -163,6 +164,26 @@ export const useArticlesStore = defineStore('articles', () => {
     persistFavorites();
   }
 
+  async function setNsfw(articleId: string, nsfw: boolean) {
+    try {
+      await updateArticleNsfw(articleId, nsfw);
+    } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        useAuthStore().sessionExpired();
+      }
+      throw err;
+    }
+
+    const article = articles.value.find(a => a.id === articleId);
+    if (article) {
+      article.nsfw = nsfw;
+    }
+    if (favoriteSnapshots.value[articleId]) {
+      favoriteSnapshots.value[articleId] = { ...favoriteSnapshots.value[articleId], nsfw };
+      persistFavorites();
+    }
+  }
+
   function resetPagination() {
     articles.value = [];
     currentPage.value = 1;
@@ -248,6 +269,7 @@ export const useArticlesStore = defineStore('articles', () => {
     loadFavoriteArticles,
     loadRandom,
     toggleFavorite,
+    setNsfw,
     resetPagination,
     loadFavorites
   };

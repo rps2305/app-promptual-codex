@@ -53,6 +53,13 @@
     <ion-footer class="image-viewer-footer">
       <div class="image-viewer-info">
         <ion-text class="image-title">{{ title }}</ion-text>
+        <NsfwFlagButton
+          v-if="articleId"
+          class="viewer-flag"
+          :article-id="articleId"
+          :nsfw="Boolean(nsfw)"
+          @done="(message) => emit('flag-result', message)"
+        />
       </div>
     </ion-footer>
   </ion-modal>
@@ -73,6 +80,7 @@ import {
   IonText
 } from '@ionic/vue';
 import { createSwipeTracker } from '@/utils/swipe';
+import NsfwFlagButton from '@/components/NsfwFlagButton.vue';
 import {
   closeOutline,
   addOutline,
@@ -85,6 +93,8 @@ interface Props {
   isOpen: boolean;
   imageUrl: string | null;
   title: string;
+  articleId?: string;
+  nsfw?: boolean;
   hasPrev?: boolean;
   hasNext?: boolean;
 }
@@ -95,6 +105,7 @@ const emit = defineEmits<{
   close: [];
   prev: [];
   next: [];
+  'flag-result': [message: string];
 }>();
 
 let swiped = false;
@@ -356,6 +367,10 @@ watch(
   background: var(--viewer-overlay);
   padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   text-align: center;
+}
+
+.viewer-flag {
+  margin-top: 8px;
 }
 
 .image-title {

@@ -1,5 +1,7 @@
 import { get } from './adapter';
-import { get as cacheGet, set, invalidate as cacheInvalidate, isFresh } from './cache';
+import { get as cacheGet, set, invalidate as cacheInvalidate, clear as cacheClear, isFresh } from './cache';
+import { fetchWithTimeout, joinUrl } from './adapter';
+import { getAccessToken } from './auth';
 import { normalizeArticle } from './normalizer';
 import { Article, PaginatedResponse, SearchOptions, ApiError } from '../types';
 
@@ -243,4 +245,57 @@ function shuffle<T>(items: T[]): T[] {
     [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
   }
   return shuffled;
+}
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Your curator session expired. Log in again.');
+    this.name = 'SessionExpiredError';
+  }
+}
+
+async function sendNsfwPatch(id: string, nsfw: boolean, token: string): Promise<Response> {
+  const url = joinUrl(import.meta.env.VITE_API_BASE_URL, `node/article/${id}`);
+  return fetchWithTimeout(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/vnd.api+json',
+      Accept: 'application/vnd.api+json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      data: { type: 'node--article', id, attributes: { field_nsfw: nsfw } },
+    }),
+  });
+}
+
+/** Saves the NSFW flag on the Drupal site. Requires a curator login. */
+export async function updateArticleNsfw(id: string, nsfw: boolean): Promise<void> {
+  let token = await getAccessToken();
+  if (!token) {
+    throw new SessionExpiredError();
+  }
+
+  let response = await sendNsfwPatch(id, nsfw, token);
+  if (response.status === 401) {
+    token = await getAccessToken(true);
+    if (!token) {
+      throw new SessionExpiredError();
+    }
+    response = await sendNsfwPatch(id, nsfw, token);
+  }
+
+  if (response.status === 401) {
+    throw new SessionExpiredError();
+  }
+  if (response.status === 403) {
+    throw new ApiError('This account is not allowed to edit articles.', 403);
+  }
+  if (!response.ok) {
+    throw new ApiError(`Could not save the change (HTTP ${response.status}).`, response.status);
+  }
+
+  // Drop cached copies so the next load shows the new flag.
+  await cacheInvalidate(`article:${id}`);
+  await cacheClear('articles?');
 }

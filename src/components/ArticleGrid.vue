@@ -35,6 +35,8 @@
     :is-open="viewerId !== null"
     :image-url="viewerArticle?.imageUrl || null"
     :title="viewerArticle?.title || ''"
+    :article-id="viewerArticle?.id"
+    :nsfw="viewerArticle?.nsfw"
     :has-prev="viewerIndex > 0"
     :has-next="viewerIndex >= 0 && (viewerIndex < articles.length - 1 || hasMore)"
     @close="viewerId = null"
@@ -58,7 +60,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ArticleCard from './ArticleCard.vue';
 import ImageViewer from './ImageViewer.vue';
 import LoadingSkeleton from './LoadingSkeleton.vue';
@@ -80,6 +82,13 @@ const emit = defineEmits<{
 const viewerId = ref<string | null>(null);
 const viewerIndex = computed(() => props.articles.findIndex(item => item.id === viewerId.value));
 const viewerArticle = computed(() => props.articles[viewerIndex.value] ?? null);
+
+// If the flagged image drops out of the filtered list, close the viewer instead of showing a blank one.
+watch(viewerIndex, (index) => {
+  if (viewerId.value !== null && index < 0) {
+    viewerId.value = null;
+  }
+});
 
 function openViewer(articleId: string) {
   viewerId.value = articleId;
