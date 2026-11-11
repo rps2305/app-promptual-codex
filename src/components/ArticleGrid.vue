@@ -99,11 +99,20 @@ function showFlagResult(message: string) {
 const viewerIndex = computed(() => props.articles.findIndex(item => item.id === viewerId.value));
 const viewerArticle = computed(() => props.articles[viewerIndex.value] ?? null);
 
-// If the flagged image drops out of the filtered list, close the viewer instead of showing a blank one.
+// When the current image drops out of the list (deleted, or flagged under a filter),
+// move on to the image that took its place instead of showing a blank viewer.
+let lastViewerIndex = -1;
 watch(viewerIndex, (index) => {
-  if (viewerId.value !== null && index < 0) {
-    viewerId.value = null;
+  if (viewerId.value === null) {
+    lastViewerIndex = -1;
+    return;
   }
+  if (index >= 0) {
+    lastViewerIndex = index;
+    return;
+  }
+  const next = props.articles[lastViewerIndex] ?? props.articles[lastViewerIndex - 1] ?? null;
+  viewerId.value = next ? next.id : null;
 });
 
 function openViewer(articleId: string) {

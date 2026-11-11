@@ -56,6 +56,13 @@
               Share
             </ion-button>
             <NsfwFlagButton :article-id="article.id" :nsfw="article.nsfw" @done="showToast" />
+            <DeleteArticleButton
+              :article-id="article.id"
+              :title="article.title"
+              :fallback-id="pageNext?.id ?? pagePrev?.id ?? null"
+              @done="showToast"
+              @deleted="onDeleted"
+            />
             <ion-button v-if="!isIos" size="small" fill="solid" @click="saveToPhotos">
               <ion-icon slot="start" aria-hidden="true" :icon="downloadOutline" />
               Save image
@@ -146,7 +153,9 @@
       :title="viewerArticle?.title || ''"
       :article-id="viewerArticle?.id"
       :nsfw="viewerArticle?.nsfw"
+      :fallback-id="viewerNext?.id ?? viewerPrev?.id ?? null"
       @flag-result="showToast"
+      @deleted="onDeleted"
       :has-prev="!!viewerPrev"
       :has-next="!!viewerNext || articlesStore.hasMore"
       @close="closeImageViewer"
@@ -190,6 +199,7 @@ import CopyPromptButton from '@/components/CopyPromptButton.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
 import ErrorState from '@/components/ErrorState.vue';
 import NsfwFlagButton from '@/components/NsfwFlagButton.vue';
+import DeleteArticleButton from '@/components/DeleteArticleButton.vue';
 import { useArticlesStore } from '@/stores/articles';
 import { useUiStore } from '@/stores/ui';
 import { createSwipeTracker } from '@/utils/swipe';
@@ -298,6 +308,12 @@ async function stepViewerNext() {
     await articlesStore.loadNextPage();
   }
   stepViewer(viewerNext.value);
+}
+
+async function onDeleted(payload: { id: string; fallbackId: string | null }) {
+  imageViewerOpen.value = false;
+  viewerId.value = null;
+  await router.replace(payload.fallbackId ? `/tabs/tab1/${payload.fallbackId}` : '/tabs/tab1');
 }
 
 async function closeImageViewer() {

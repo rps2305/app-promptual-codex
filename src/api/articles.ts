@@ -254,19 +254,36 @@ export class SessionExpiredError extends Error {
   }
 }
 
-async function sendNsfwPatch(id: string, nsfw: boolean, token: string): Promise<Response> {
-  const url = joinUrl(import.meta.env.VITE_API_BASE_URL, `node/article/${id}`);
-  return fetchWithTimeout(url, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/vnd.api+json',
-      Accept: 'application/vnd.api+json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      data: { type: 'node--article', id, attributes: { field_nsfw: nsfw } },
-    }),
-  });
+async function authedRequest(send: (token: string) => Promise<Response>): Promise<Response> {
+  let token = await getAccessToken();
+  if (!token) {
+    throw new SessionExpiredError();
+  }
+
+  let response = await send(token);
+  if (response.status === 401) {
+    token = await getAccessToken(true);
+    if (!token) {
+      throw new SessionExpiredError();
+    }
+    response = await send(token);
+  }
+  if (response.status === 401) {
+    throw new SessionExpiredError();
+  }
+  return response;
+}
+
+async function failFromResponse(response: Response, action: string): Promise<never> {
+  const detail = await readErrorDetail(response);
+  if (response.status === 403) {
+    throw new ApiError(`The site refused ${action}${detail ? `: ${detail}` : '.'}`, 403);
+  }
+  throw new ApiError(`Could not ${action} (HTTP ${response.status})${detail ? `: ${detail}` : '.'}`, response.status);
+}
+
+function articleUrl(id: string): string {
+  return joinUrl(import.meta.env.VITE_API_BASE_URL, `node/article/${id}`);
 }
 
 async function readErrorDetail(response: Response): Promise<string> {
@@ -279,34 +296,48 @@ async function readErrorDetail(response: Response): Promise<string> {
   }
 }
 
-/** Saves the NSFW flag on the Drupal site. Requires a curator login. */
-export async function updateArticleNsfw(id: string, nsfw: boolean): Promise<void> {
-  let token = await getAccessToken();
-  if (!token) {
-    throw new SessionExpiredError();
-  }
-
-  let response = await sendNsfwPatch(id, nsfw, token);
-  if (response.status === 401) {
-    token = await getAccessToken(true);
-    if (!token) {
-      throw new SessionExpiredError();
-    }
-    response = await sendNsfwPatch(id, nsfw, token);
-  }
-
-  if (response.status === 401) {
-    throw new SessionExpiredError();
-  }
-  if (!response.ok) {
-    const detail = await readErrorDetail(response);
-    if (response.status === 403) {
-      throw new ApiError(`The site refused the change${detail ? `: ${detail}` : '.'}`, 403);
-    }
-    throw new ApiError(`Could not save the change (HTTP ${response.status})${detail ? `: ${detail}` : '.'}`, response.status);
-  }
-
-  // Drop cached copies so the next load shows the new flag.
+async function dropCachedArticle(id: string): Promise<void> {
   await cacheInvalidate(`article:${id}`);
   await cacheClear('articles?');
+}
+
+/** Saves the NSFW flag on the Drupal site. Requires a curator login. */
+export async function updateArticleNsfw(id: string, nsfw: boolean): Promise<void> {
+  const response = await authedRequest((token) =>
+    fetchWithTimeout(articleUrl(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/vnd.api+json',
+        Accept: 'application/vnd.api+json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        data: { type: 'node--article', id, attributes: { field_nsfw: nsfw } },
+      }),
+    })
+  );
+
+  if (!response.ok) {
+    await failFromResponse(response, 'the change');
+  }
+  await dropCachedArticle(id);
+}
+
+/** Permanently deletes the article on the Drupal site. Requires a curator login. */
+export async function deleteArticle(id: string): Promise<void> {
+  const response = await authedRequest((token) =>
+    fetchWithTimeout(articleUrl(id), {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+  );
+
+  // 404 means it is already gone, which is the outcome the curator wanted.
+  if (!response.ok && response.status !== 404) {
+    await failFromResponse(response, 'the deletion');
+  }
+  await dropCachedArticle(id);
 }

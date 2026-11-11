@@ -108,3 +108,42 @@ describe('NSFW update error details', () => {
     await expect(articles.updateArticleNsfw('abc', true)).rejects.toThrow(/field_nsfw/);
   });
 });
+
+describe('deleteArticle', () => {
+  const tokenOk = { ok: true, status: 200, statusText: 'OK', json: async () => ({ access_token: 'a', refresh_token: 'r', expires_in: 300 }) } as Response;
+
+  async function setup(second: Partial<Response>) {
+    vi.resetModules();
+    vi.stubEnv('VITE_OAUTH_CLIENT_ID', 'client-123');
+    localStorage.clear();
+    const fetchMock = vi.fn().mockResolvedValueOnce(tokenOk).mockResolvedValueOnce({ statusText: '', json: async () => ({}), ...second } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    const auth = await import('@/api/auth');
+    const articles = await import('@/api/articles');
+    await auth.login('curator', 'secret');
+    return { fetchMock, articles };
+  }
+
+  it('sends a DELETE with the bearer token', async () => {
+    const { fetchMock, articles } = await setup({ ok: true, status: 204 });
+    await articles.deleteArticle('abc-uuid');
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(String(url)).toContain('node/article/abc-uuid');
+    expect(init.method).toBe('DELETE');
+    expect(init.headers.Authorization).toBe('Bearer a');
+  });
+
+  it('treats 404 as already deleted', async () => {
+    const { articles } = await setup({ ok: false, status: 404 });
+    await expect(articles.deleteArticle('gone')).resolves.toBeUndefined();
+  });
+
+  it('reports the site message when deletion is refused', async () => {
+    const { articles } = await setup({
+      ok: false,
+      status: 403,
+      json: async () => ({ errors: [{ detail: "The 'delete any article content' permission is required." }] }),
+    });
+    await expect(articles.deleteArticle('abc')).rejects.toThrow(/delete any article content/);
+  });
+});

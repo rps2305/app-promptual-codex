@@ -60,6 +60,15 @@
           :nsfw="Boolean(nsfw)"
           @done="(message) => emit('flag-result', message)"
         />
+        <DeleteArticleButton
+          v-if="articleId"
+          class="viewer-flag"
+          :article-id="articleId"
+          :title="title"
+          :fallback-id="fallbackId"
+          @done="(message) => emit('flag-result', message)"
+          @deleted="(payload) => emit('deleted', payload)"
+        />
       </div>
     </ion-footer>
   </ion-modal>
@@ -81,6 +90,7 @@ import {
 } from '@ionic/vue';
 import { createSwipeTracker } from '@/utils/swipe';
 import NsfwFlagButton from '@/components/NsfwFlagButton.vue';
+import DeleteArticleButton from '@/components/DeleteArticleButton.vue';
 import {
   closeOutline,
   addOutline,
@@ -95,6 +105,7 @@ interface Props {
   title: string;
   articleId?: string;
   nsfw?: boolean;
+  fallbackId?: string | null;
   hasPrev?: boolean;
   hasNext?: boolean;
 }
@@ -106,6 +117,7 @@ const emit = defineEmits<{
   prev: [];
   next: [];
   'flag-result': [message: string];
+  deleted: [payload: { id: string; fallbackId: string | null }];
 }>();
 
 let swiped = false;
