@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import CuratorButton from '@/components/CuratorButton.vue';
-import { ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   IonPage,
@@ -97,13 +97,21 @@ import type { Article } from '@/types';
 const router = useRouter();
 const store = useArticlesStore();
 const uiStore = useUiStore();
-const randomArticles = ref<Article[]>([]);
+const randomPicks = ref<Article[]>([]);
+// Always show the store's current copy so deleted images disappear and flag changes show up.
+const randomArticles = computed(() => {
+  const current = new Map(store.articles.map(article => [article.id, article]));
+  return randomPicks.value.flatMap(pick => {
+    const live = current.get(pick.id);
+    return live ? [live] : [];
+  });
+});
 const RANDOM_COUNT = 12;
 const RANDOM_SAMPLE_COUNT = 32;
 
 async function refreshRandom() {
   const random = await store.loadRandom(uiStore.nsfwFilter === 'all' ? RANDOM_COUNT : RANDOM_SAMPLE_COUNT);
-  randomArticles.value = filterByNsfw(random).slice(0, RANDOM_COUNT);
+  randomPicks.value = filterByNsfw(random).slice(0, RANDOM_COUNT);
 }
 
 function filterByNsfw(articles: Article[]) {
@@ -139,7 +147,7 @@ async function retryRandom() {
 watch(
   () => store.articles.length,
   (length) => {
-    if (length > 0 && randomArticles.value.length === 0) {
+    if (length > 0 && randomPicks.value.length === 0) {
       refreshRandom();
     }
   },

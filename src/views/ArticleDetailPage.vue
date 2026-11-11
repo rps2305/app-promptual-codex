@@ -310,10 +310,15 @@ async function stepViewerNext() {
   stepViewer(viewerNext.value);
 }
 
-async function onDeleted(payload: { id: string; fallbackId: string | null }) {
+async function onDeleted() {
   imageViewerOpen.value = false;
   viewerId.value = null;
-  await router.replace(payload.fallbackId ? `/tabs/tab1/${payload.fallbackId}` : '/tabs/tab1');
+  // Step back to the list the image was opened from (gallery, random, favorites).
+  if (window.history.state?.back) {
+    router.back();
+  } else {
+    await router.replace('/tabs/tab1');
+  }
 }
 
 async function closeImageViewer() {
