@@ -4,6 +4,15 @@ import * as auth from '../api/auth';
 
 export const useAuthStore = defineStore('auth', () => {
   const isCurator = ref(auth.isLoggedIn());
+  const loginOpen = ref(false);
+
+  function openLogin() {
+    loginOpen.value = true;
+  }
+
+  function closeLogin() {
+    loginOpen.value = false;
+  }
 
   async function login(username: string, password: string) {
     await auth.login(username, password);
@@ -21,5 +30,5 @@ export const useAuthStore = defineStore('auth', () => {
     isCurator.value = false;
   }
 
-  return { isCurator, login, logout, sessionExpired, isConfigured: auth.isOauthConfigured };
+  return { isCurator, loginOpen, openLogin, closeLogin, login, logout, sessionExpired, isConfigured: auth.isOauthConfigured };
 });

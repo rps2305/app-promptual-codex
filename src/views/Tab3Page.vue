@@ -2,6 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <CuratorButton />
+        </ion-buttons>
         <ion-title>
           <span class="title-row">
             <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
@@ -68,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import CuratorButton from '@/components/CuratorButton.vue';
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {

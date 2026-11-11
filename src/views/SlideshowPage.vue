@@ -2,6 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <CuratorButton />
+        </ion-buttons>
         <ion-title>
           <span class="title-row">
             <img class="title-logo" src="/promptual-logo.png" alt="" aria-hidden="true" />
@@ -68,8 +71,9 @@
 </template>
 
 <script setup lang="ts">
+import CuratorButton from '@/components/CuratorButton.vue';
 import { onMounted, ref } from 'vue';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon } from '@ionic/vue';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { expandOutline } from 'ionicons/icons';
 import ErrorState from '@/components/ErrorState.vue';
 import SlideshowViewer from '@/components/SlideshowViewer.vue';
