@@ -131,7 +131,13 @@
         :on-back="goToGallery"
       />
 
-      <ion-toast :is-open="toastOpen" :message="toastMessage" duration="2000" @didDismiss="toastOpen = false" />
+      <ion-toast
+        :is-open="toastOpen"
+        :message="toastMessage"
+        :duration="toastMessage.length > 40 ? 12000 : 2000"
+        :buttons="[{ text: 'OK', role: 'cancel' }]"
+        @didDismiss="toastOpen = false"
+      />
     </ion-content>
 
     <ImageViewer

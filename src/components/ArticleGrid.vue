@@ -42,6 +42,15 @@
     @close="viewerId = null"
     @prev="stepViewer(-1)"
     @next="stepViewer(1)"
+    @flag-result="showFlagResult"
+  />
+
+  <ion-toast
+    :is-open="flagToastOpen"
+    :message="flagToastMessage"
+    :duration="flagToastMessage.length > 40 ? 12000 : 2000"
+    :buttons="[{ text: 'OK', role: 'cancel' }]"
+    @didDismiss="flagToastOpen = false"
   />
 
   <ion-infinite-scroll
@@ -59,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow } from '@ionic/vue';
+import { IonButton, IonCol, IonGrid, IonInfiniteScroll, IonInfiniteScrollContent, IonRow, IonToast } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import ArticleCard from './ArticleCard.vue';
 import ImageViewer from './ImageViewer.vue';
@@ -80,6 +89,13 @@ const emit = defineEmits<{
 }>();
 
 const viewerId = ref<string | null>(null);
+const flagToastOpen = ref(false);
+const flagToastMessage = ref('');
+
+function showFlagResult(message: string) {
+  flagToastMessage.value = message;
+  flagToastOpen.value = true;
+}
 const viewerIndex = computed(() => props.articles.findIndex(item => item.id === viewerId.value));
 const viewerArticle = computed(() => props.articles[viewerIndex.value] ?? null);
 

@@ -4,6 +4,7 @@ import { fetchWithTimeout } from './adapter';
 const TOKEN_KEY = 'promptual:curator:tokens';
 const EXPIRY_MARGIN_MS = 60_000;
 const DEFAULT_SITE_BASE_URL = 'https://promptual.puntuale.nl';
+const CURATOR_SCOPE = import.meta.env.VITE_OAUTH_SCOPE || 'nsfw_curator';
 
 export interface CuratorTokens {
   accessToken: string;
@@ -82,7 +83,7 @@ export async function login(username: string, password: string): Promise<void> {
   if (!isOauthConfigured()) {
     throw new ApiError('Curator login is not configured for this site yet.');
   }
-  const tokens = await requestToken({ grant_type: 'password', username, password });
+  const tokens = await requestToken({ grant_type: 'password', username, password, scope: CURATOR_SCOPE });
   saveTokens(tokens);
 }
 

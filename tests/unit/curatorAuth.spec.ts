@@ -29,6 +29,7 @@ describe('curator login and NSFW update', () => {
     const body = (init.body as URLSearchParams).toString();
     expect(body).toContain('grant_type=password');
     expect(body).toContain('client_id=client-123');
+    expect(body).toContain('scope=nsfw_curator');
     expect(auth.isLoggedIn()).toBe(true);
   });
 
