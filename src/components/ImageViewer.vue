@@ -28,15 +28,16 @@
       <div
         class="image-viewer-container"
         @click="onContainerClick"
+        @wheel="onWheel"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+        @touchcancel="onTouchEnd"
         @dblclick="resetZoom"
       >
         <div
           class="image-viewer-image-wrapper"
           :style="transformStyle"
-          @wheel="onWheel"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
         >
           <img
             v-if="imageUrl"
@@ -117,6 +118,10 @@ const transformStyle = computed(() => {
   };
 });
 
+function clampZoom(value: number) {
+  return Math.max(minZoom, Math.min(maxZoom, value));
+}
+
 function zoomIn() {
   if (zoomLevel.value < maxZoom) {
     zoomLevel.value = Math.min(zoomLevel.value + 0.5, maxZoom);
@@ -151,12 +156,16 @@ function centerImage() {
 
 function onWheel(event: WheelEvent) {
   event.preventDefault();
-  const delta = event.deltaY > 0 ? -0.1 : 0.1;
-  const newZoom = Math.max(minZoom, Math.min(maxZoom, zoomLevel.value + delta));
+  // Scale by the wheel delta so trackpad pinch (ctrl+wheel) and mouse wheels both feel right.
+  const magnitude = Math.min(Math.abs(event.deltaY), 50) / 50;
+  const step = Math.max(0.05, magnitude * 0.25);
+  const newZoom = clampZoom(zoomLevel.value + (event.deltaY > 0 ? -step : step));
 
   if (newZoom !== zoomLevel.value) {
     zoomLevel.value = newZoom;
-    centerImage();
+    if (newZoom === minZoom) {
+      centerImage();
+    }
   }
 }
 
@@ -180,13 +189,13 @@ function onTouchStart(event: TouchEvent) {
 function onTouchMove(event: TouchEvent) {
   if (event.touches.length === 2) {
     const currentDistance = getTouchDistance(event.touches);
-    const delta = (currentDistance - lastTouchDistance.value) / 100;
-    const newZoom = Math.max(minZoom, Math.min(maxZoom, zoomLevel.value + delta));
-
-    if (newZoom !== zoomLevel.value) {
-      zoomLevel.value = newZoom;
-      lastTouchDistance.value = currentDistance;
+    event.preventDefault();
+    if (lastTouchDistance.value > 0 && currentDistance > 0) {
+      // Multiplicative, and always advance the reference distance so zooming out
+      // still works after hitting the max (or min) zoom.
+      zoomLevel.value = clampZoom(zoomLevel.value * (currentDistance / lastTouchDistance.value));
     }
+    lastTouchDistance.value = currentDistance;
   } else if (event.touches.length === 1 && isDragging.value && lastTouchPoint.value) {
     event.preventDefault();
     const touch = event.touches[0];
@@ -204,6 +213,9 @@ function onTouchEnd() {
   isDragging.value = false;
   lastTouchPoint.value = null;
   lastTouchDistance.value = 0;
+  if (zoomLevel.value < 1.05) {
+    resetZoom();
+  }
 }
 
 function onWindowTouchStart(event: TouchEvent) {
