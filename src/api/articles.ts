@@ -269,6 +269,16 @@ async function sendNsfwPatch(id: string, nsfw: boolean, token: string): Promise<
   });
 }
 
+async function readErrorDetail(response: Response): Promise<string> {
+  try {
+    const body = await response.json();
+    const first = body?.errors?.[0];
+    return String(first?.detail || first?.title || body?.message || '').slice(0, 240);
+  } catch {
+    return '';
+  }
+}
+
 /** Saves the NSFW flag on the Drupal site. Requires a curator login. */
 export async function updateArticleNsfw(id: string, nsfw: boolean): Promise<void> {
   let token = await getAccessToken();
@@ -288,11 +298,12 @@ export async function updateArticleNsfw(id: string, nsfw: boolean): Promise<void
   if (response.status === 401) {
     throw new SessionExpiredError();
   }
-  if (response.status === 403) {
-    throw new ApiError('This account is not allowed to edit articles.', 403);
-  }
   if (!response.ok) {
-    throw new ApiError(`Could not save the change (HTTP ${response.status}).`, response.status);
+    const detail = await readErrorDetail(response);
+    if (response.status === 403) {
+      throw new ApiError(`The site refused the change${detail ? `: ${detail}` : '.'}`, 403);
+    }
+    throw new ApiError(`Could not save the change (HTTP ${response.status})${detail ? `: ${detail}` : '.'}`, response.status);
   }
 
   // Drop cached copies so the next load shows the new flag.

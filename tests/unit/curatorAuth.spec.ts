@@ -84,3 +84,26 @@ describe('curator login and NSFW update', () => {
     await expect(articles.updateArticleNsfw('abc', true)).rejects.toBeInstanceOf(articles.SessionExpiredError);
   });
 });
+
+describe('NSFW update error details', () => {
+  it('includes the server message when the site refuses the change', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_OAUTH_CLIENT_ID', 'client-123');
+    localStorage.clear();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', json: async () => ({ access_token: 'a', refresh_token: 'r', expires_in: 300 }) } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({ errors: [{ detail: "The current user is not allowed to PATCH the selected field (field_nsfw)." }] }),
+      } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    const auth = await import('@/api/auth');
+    const articles = await import('@/api/articles');
+
+    await auth.login('curator', 'secret');
+    await expect(articles.updateArticleNsfw('abc', true)).rejects.toThrow(/field_nsfw/);
+  });
+});
