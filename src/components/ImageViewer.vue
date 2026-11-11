@@ -330,8 +330,11 @@ watch(
 }
 
 .image-viewer-image-wrapper {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease-out;
 }
 
@@ -339,8 +342,8 @@ watch(
   pointer-events: none;
   -webkit-touch-callout: none;
   -webkit-user-drag: none;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   user-select: none;
 }
