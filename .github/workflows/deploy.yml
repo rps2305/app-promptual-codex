@@ -27,6 +27,7 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE: /
+          VITE_OAUTH_CLIENT_ID: promptual-app
       - run: touch dist/.nojekyll
       - name: SPA fallback
         run: |
